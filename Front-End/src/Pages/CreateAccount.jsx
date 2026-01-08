@@ -1,0 +1,245 @@
+import { useState } from "react";
+import { FaUser, FaLock, FaEnvelope, FaPhone } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+export default function CreateAccount() {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    password: "",
+    inviteCode: "",
+  });
+
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!form.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!form.lastName.trim()) newErrors.lastName = "Last name is required";
+
+    if (!form.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Enter a valid phone number";
+    }
+
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!form.password) {
+      newErrors.password = "Password is required";
+    } else if (form.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])/.test(form.password)) {
+      newErrors.password =
+        "Password must contain uppercase, lowercase and number";
+    }
+
+    // Invite code is OPTIONAL → no validation unless you want to validate format
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setApiError("");
+
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+
+      const payload = {
+        FirstName: form.firstName.trim(),
+        LastName: form.lastName.trim(),
+        PhoneNumber: form.phone.trim(),
+        Email: form.email.trim(),
+        Password: form.password,
+      
+      };
+
+      // Only send invite code if user entered it
+      if (form.inviteCode.trim()) {
+        payload.InviteCode = form.inviteCode.trim();
+      }
+
+      await axios.post(
+        "https://jytec-investment-api.onrender.com/api/auth/signup",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      navigate("/login");
+    } catch (err) {
+      setApiError(
+        err.response?.data?.message ||
+          "Unable to create account. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-[#063c35] py-10 text-center text-white">
+        <div className="flex items-center justify-center gap-3 text-xl font-semibold">
+          <span className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+            <FaUser />
+          </span>
+          <h1 className="text-2xl md:text-4xl">Create an Account</h1>
+        </div>
+        <p className="text-lg text-white/70 mt-1">
+          Create an account to continue your profitability analysis
+        </p>
+      </div>
+
+      {/* Form */}
+      <div className="flex justify-center px-4">
+        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 mt-14">
+          {apiError && (
+            <div className="bg-red-50 text-red-600 text-sm px-3 py-2 rounded mb-4">
+              {apiError}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* First Name */}
+              <Field
+                label="First name"
+                icon={<FaUser />}
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                error={errors.firstName}
+                placeholder="John"
+              />
+
+              {/* Last Name */}
+              <Field
+                label="Last name"
+                icon={<FaUser />}
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                error={errors.lastName}
+                placeholder="Doe"
+              />
+
+              {/* Phone */}
+              <Field
+                label="Phone"
+                icon={<FaPhone />}
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                error={errors.phone}
+                placeholder="+91 9876543210"
+              />
+
+              {/* Email */}
+              <Field
+                label="Email"
+                icon={<FaEnvelope />}
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                error={errors.email}
+                placeholder="user@email.com"
+              />
+
+              {/* Password */}
+              <Field
+                label="Password"
+                icon={<FaLock />}
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                error={errors.password}
+                placeholder="••••••••"
+              />
+
+              {/* Invite Code (OPTIONAL) */}
+              <Field
+                label="Invite Code (Optional)"
+                icon={<FaLock />}
+                name="inviteCode"
+                value={form.inviteCode}
+                onChange={handleChange}
+                error={errors.inviteCode}
+                placeholder="Enter invite code"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="flex-1 bg-gray-100 py-3 rounded-lg text-sm font-medium hover:bg-gray-200"
+              >
+                Login
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-[#063c35] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#052f2a] disabled:opacity-60"
+              >
+                {loading ? "Creating..." : "Create an Account"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================
+   Reusable Field Component
+============================ */
+function Field({
+  label,
+  icon,
+  error,
+  ...props
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <div
+        className={`flex items-center rounded-lg px-3 border ${
+          error ? "border-red-500 bg-red-50" : "border-transparent bg-gray-100"
+        }`}
+      >
+        <span className="text-gray-400">{icon}</span>
+        <input
+          {...props}
+          className="w-full bg-transparent px-2 py-3 outline-none text-sm"
+        />
+      </div>
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+}

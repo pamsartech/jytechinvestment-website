@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+.heading {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+html {
+   scroll-behavior: smooth;
+}
+body {
+  font-family: "Satoshi", system-ui, sans-serif;
+  
+}
