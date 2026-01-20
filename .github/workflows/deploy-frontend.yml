@@ -18,19 +18,24 @@ jobs:
         with:
           node-version: 20
 
+      # 🔧 CHANGE 1: run npm in frontend folder
       - name: Install dependencies
+        working-directory: frontend
         run: npm install
 
+      # 🔧 CHANGE 2: build frontend in correct folder
       - name: Build frontend
+        working-directory: frontend
         run: npm run build
 
+      # 🔧 CHANGE 3: deploy correct build folder
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             rm -rf /var/www/dev-app/frontend/*
-            cp -r $GITHUB_WORKSPACE/dist/* /var/www/dev-app/frontend/
+            cp -r /home/${{ secrets.SSH_USER }}/frontend/dist/* /var/www/dev-app/frontend/
             sudo systemctl reload nginx
