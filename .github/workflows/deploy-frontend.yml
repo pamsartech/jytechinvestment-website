@@ -1,4 +1,4 @@
-name: Deploy Frontend
+name: Deploy Frontend (Server Pull)
 
 on:
   push:
@@ -10,52 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      # 2️⃣ Setup Node
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
-        working-directory: Front-End
-        run: npm install
-
-      # 4️⃣ Build frontend
-      - name: Build frontend
-        working-directory: Front-End
-        run: npm run build
-
-      # 5️⃣ Clean target directory on server
-      - name: Clean frontend folder on server
+      - name: Deploy via SSH (git pull + build)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
+            echo "🚀 Deploying frontend..."
+
+            cd /var/www/dev-app/website/Front-End
+
+            echo "📥 Pulling latest code"
+            git pull origin main
+
+            echo "📦 Installing dependencies"
+            npm install
+
+            echo "🏗️ Building frontend"
+            npm run build
+
+            echo "🧹 Cleaning old frontend files"
             rm -rf /var/www/dev-app/frontend/*
 
-      # 6️⃣ Upload build files
-      - name: Upload frontend build
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "Front-End/dist/*"
-          target: "/var/www/dev-app/frontend"
+            echo "📁 Copying new build"
+            cp -r dist/* /var/www/dev-app/frontend/
 
-      # 7️⃣ Reload nginx
-      - name: Reload nginx
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+            echo "♻️ Reloading Nginx"
             sudo systemctl reload nginx
+
+            echo "✅ Deployment completed"
