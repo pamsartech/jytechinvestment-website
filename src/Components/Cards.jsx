@@ -8,26 +8,26 @@ import {
 const FEATURES = [
   {
     icon: FaCalculator,
-    title: "Accurate calculations",
+    title: "Calculs précis",
     description:
-      "Professional financial algorithms for reliable results",
+      "Algorithmes financiers professionnels pour des résultats fiables",
   },
   {
     icon: FaChartLine,
-    title: "Optimal profitability",
+    title: "Rentabilité optimisée ",
     description:
-      "Analyse and optimised your margin on each transaction",
+      "Analysez et optimisez votre marge sur chaque opération",
   },
   {
     icon: FaShieldAlt,
-    title: "Controlled VAT",
+    title: "TVA maîtrisée",
     description:
-      "Complete management of real estate VAT Regimes",
+      "Gestion complète des régimes de TVA immobilière",
   },
   {
     icon: FaClock,
-    title: "Real time",
-    description: "Instant results as you type",
+    title: "Temps réel",
+    description: "Résultats instantanés à la saisie",
   },
 ];
 

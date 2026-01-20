@@ -6,10 +6,15 @@ import ScrollTop from "./Pages/ScrollTop";
 
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
+import PublicTermsConditions from "./Components/PublicTermsConditions";
+import PublicPrivacyPolicy from "./Components/PublicPrivacyPolicy";
+import PublicSubscription from "./Components/PublicSubscription";
+import PublicSupport from "./Components/PublicSupport";
 
 // Pages
 import Login from "./Pages/Login";
 import CreateAccount from "./Pages/CreateAccount";
+import PasswordReset from "./Pages/PasswordReset";
 import Home from "./Pages/Home";
 import History from "./Pages/History";
 import Support from "./Pages/Support";
@@ -20,7 +25,7 @@ import FailedPayment from "./Pages/FailedPayment";
 import PrivacyPolicy from "./Pages/PrivacyPolicy";
 import TermsConditions from "./Pages/TermsConditions";
 import EditReport from "./Pages/EditReport";
-
+import Profile from "./Components/Profile";
 import { AuthProvider, useAuth } from "./Context/AuthContext";
 
 /* ============================
@@ -61,8 +66,9 @@ const ProtectedLayout = () => (
        <Route path="/edit-report/:id" element={<EditReport />} />
        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
        <Route path="/terms-conditions" element={<TermsConditions />} />
-       <Route path="/success-payment" element={<SuccessPayment />} />
-       <Route path="/failed-payment" element={<FailedPayment />} />
+       <Route path="/profile" element={<Profile />} />
+       {/* <Route path="/success-payment" element={<SuccessPayment />} />
+       <Route path="/failed-payment" element={<FailedPayment />} /> */}
     </Routes>
     <Footer />
   </>
@@ -86,11 +92,19 @@ export default function App() {
       <AuthProvider>
 
         <ScrollTop />
+      
 
         <Routes>
           {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/create-account" element={<CreateAccount />} />
+          <Route path="/password-reset" element={<PasswordReset />} />
+           <Route path="/public-terms-conditions" element={<PublicTermsConditions />} />
+           <Route path="/public-privacy-policy" element={<PublicPrivacyPolicy />} />
+           <Route path="/public-subscription" element={<PublicSubscription />} />
+            <Route path="/public-support" element={<PublicSupport />} />
+          <Route path="/success-payment" element={<SuccessPayment />} />
+          <Route path="/failed-payment" element={<FailedPayment />} />
 
           {/* Protected */}
           <Route

@@ -4,7 +4,7 @@ import { FaBars, FaTimes, FaUserCircle, FaChevronDown } from "react-icons/fa";
 import { FiLogOut, FiUser } from "react-icons/fi";
 import { useAuth } from "../Context/AuthContext";
 
-export default function Navbar() {
+export default function PublicNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showNav, setShowNav] = useState(true);
@@ -18,10 +18,10 @@ export default function Navbar() {
   const { logout } = useAuth();
 
   const navLinks = [
-    { label: "Welcome", path: "/" },
-    { label: "History", path: "/history" },
-    { label: "Subscription", path: "/subscription" },
-    { label: "Support", path: "/support" },
+    // { label: "Welcome", path: "/" },
+    // { label: "History", path: "/history" },
+    // { label: "Subscription", path: "/subscription" },
+    { label: "Support", path: "/public-support" },
   ];
 
   const handleNavigate = (path) => {
@@ -75,7 +75,7 @@ export default function Navbar() {
         <nav className="mx-auto flex w-full items-center justify-between px-4 py-4 lg:px-15">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 text-white">
-            <img className="h-14 w-14 rounded-full" src="/logo1.jpg" alt="Logo" />
+            <img className="h-14 w-14 md:h-18 md:w-18 rounded-full mx-2" src="/logo1.jpg" alt="Logo" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -100,7 +100,7 @@ export default function Navbar() {
           </ul>
 
           {/* Desktop Profile Dropdown */}
-          <div className="relative hidden lg:block" ref={dropdownRef}>
+          {/* <div className="relative hidden lg:block" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileOpen((prev) => !prev)}
               className="flex items-center gap-1 text-white hover:text-white/80"
@@ -133,7 +133,7 @@ export default function Navbar() {
                 </button>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Mobile Menu Button */}
           <button className="lg:hidden text-white" onClick={() => setIsOpen(true)}>
@@ -194,7 +194,7 @@ export default function Navbar() {
     </ul>
 
     {/* Mobile Profile Actions */}
-    <div className="mt-10 border-t border-white/20 pt-6 space-y-3">
+    {/* <div className="mt-10 border-t border-white/20 pt-6 space-y-3">
       <button
         onClick={() => handleNavigate("/profile")}
         className="flex w-full items-center gap-2 rounded-lg bg-white/10 px-4 py-3 text-white"
@@ -210,7 +210,7 @@ export default function Navbar() {
         <FiLogOut />
         Logout
       </button>
-    </div>
+    </div> */}
   </div>
 </div>
 

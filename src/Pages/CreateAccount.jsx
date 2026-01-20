@@ -2,6 +2,9 @@ import { useState } from "react";
 import { FaUser, FaLock, FaEnvelope, FaPhone } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
+import PublicNavbar from "../Components/PublicNavbar";
+import PublicFooter from "../Components/PublicFooter";
 
 export default function CreateAccount() {
   const navigate = useNavigate();
@@ -27,21 +30,35 @@ export default function CreateAccount() {
   const validate = () => {
     const newErrors = {};
 
-    if (!form.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!form.lastName.trim()) newErrors.lastName = "Last name is required";
+    // First Name
+    if (!form.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (form.firstName.trim().length < 3) {
+      newErrors.firstName = "First name must be at least 3 characters";
+    }
 
+    // Last Name
+    if (!form.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (form.lastName.trim().length < 3) {
+      newErrors.lastName = "Last name must be at least 3 characters";
+    }
+
+    // Phone
     if (!form.phone.trim()) {
       newErrors.phone = "Phone number is required";
     } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ""))) {
       newErrors.phone = "Enter a valid phone number";
     }
 
+    // Email
     if (!form.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = "Enter a valid email address";
     }
 
+    // Password
     if (!form.password) {
       newErrors.password = "Password is required";
     } else if (form.password.length < 8) {
@@ -50,8 +67,6 @@ export default function CreateAccount() {
       newErrors.password =
         "Password must contain uppercase, lowercase and number";
     }
-
-    // Invite code is OPTIONAL → no validation unless you want to validate format
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -72,26 +87,33 @@ export default function CreateAccount() {
         PhoneNumber: form.phone.trim(),
         Email: form.email.trim(),
         Password: form.password,
-      
       };
 
-      // Only send invite code if user entered it
+      // Send invite code only if provided
       if (form.inviteCode.trim()) {
-        payload.InviteCode = form.inviteCode.trim();
+        payload.referralCode = form.inviteCode.trim();
       }
 
-      await axios.post(
-        "https://jytec-investment-api.onrender.com/api/auth/signup",
+      const res = await axios.post(
+        "https://api.emibocquillon.fr/api/auth/signup",
         payload,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
+
+      // ✅ SUCCESS TOAST (API-driven)
+      toast.success(res.data?.message || "Account created successfully");
 
       navigate("/login");
     } catch (err) {
-      setApiError(
+      const message =
         err.response?.data?.message ||
-          "Unable to create account. Please try again."
-      );
+        "Unable to create account. Please try again.";
+
+      // ❌ ERROR TOAST
+      toast.error(message);
+
+      // keep inline error if you still want it
+      setApiError(message);
     } finally {
       setLoading(false);
     }
@@ -99,16 +121,17 @@ export default function CreateAccount() {
 
   return (
     <div className="min-h-screen bg-white">
+      <PublicNavbar />
       {/* Header */}
       <div className="bg-[#063c35] py-10 text-center text-white">
         <div className="flex items-center justify-center gap-3 text-xl font-semibold">
           <span className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <FaUser />
           </span>
-          <h1 className="text-2xl md:text-4xl">Create an Account</h1>
+          <h1 className="text-2xl md:text-4xl">Créer un compte</h1>
         </div>
         <p className="text-lg text-white/70 mt-1">
-          Create an account to continue your profitability analysis
+          Créez un compte pour poursuivre votre analyse de rentabilité.
         </p>
       </div>
 
@@ -125,7 +148,7 @@ export default function CreateAccount() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* First Name */}
               <Field
-                label="First name"
+                label="Prénom"
                 icon={<FaUser />}
                 name="firstName"
                 value={form.firstName}
@@ -136,7 +159,7 @@ export default function CreateAccount() {
 
               {/* Last Name */}
               <Field
-                label="Last name"
+                label="Nom de famille"
                 icon={<FaUser />}
                 name="lastName"
                 value={form.lastName}
@@ -147,7 +170,7 @@ export default function CreateAccount() {
 
               {/* Phone */}
               <Field
-                label="Phone"
+                label="Téléphone"
                 icon={<FaPhone />}
                 name="phone"
                 value={form.phone}
@@ -169,7 +192,7 @@ export default function CreateAccount() {
 
               {/* Password */}
               <Field
-                label="Password"
+                label="Mot de passe"
                 icon={<FaLock />}
                 name="password"
                 type="password"
@@ -181,7 +204,7 @@ export default function CreateAccount() {
 
               {/* Invite Code (OPTIONAL) */}
               <Field
-                label="Invite Code (Optional)"
+                label="Code d'invitation (facultatif)"
                 icon={<FaLock />}
                 name="inviteCode"
                 value={form.inviteCode}
@@ -198,7 +221,7 @@ export default function CreateAccount() {
                 onClick={() => navigate("/login")}
                 className="flex-1 bg-gray-100 py-3 rounded-lg text-sm font-medium hover:bg-gray-200"
               >
-                Login
+                Se connecter
               </button>
 
               <button
@@ -206,12 +229,14 @@ export default function CreateAccount() {
                 disabled={loading}
                 className="flex-1 bg-[#063c35] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#052f2a] disabled:opacity-60"
               >
-                {loading ? "Creating..." : "Create an Account"}
+                {loading ? "Création..." : "Créer un compte"}
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      <PublicFooter />
     </div>
   );
 }
@@ -219,12 +244,7 @@ export default function CreateAccount() {
 /* ============================
    Reusable Field Component
 ============================ */
-function Field({
-  label,
-  icon,
-  error,
-  ...props
-}) {
+function Field({ label, icon, error, ...props }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>

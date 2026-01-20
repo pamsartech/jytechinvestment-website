@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   FaHome,
@@ -19,10 +19,113 @@ import { AiOutlineBank } from "react-icons/ai";
 
 export default function EditReport() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const token = localStorage.getItem("authToken");
+
+  const authConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProject = async () => {
+      try {
+        const res = await axios.get(
+          `https://api.emibocquillon.fr/api/project/getproject/${id}`,
+          authConfig
+        );
+
+        const project = res.data.project;
+
+        /* ===========================
+         BASIC INFO
+      =========================== */
+        setProjectName(project.name || "");
+        setProjectAddress(project.address || "");
+
+        /* ===========================
+         PURCHASE
+      =========================== */
+        setPurchase({
+          faiPrice: project.purchase?.faiPrice?.toString() || "",
+          agencyFees: project.purchase?.agencyFees?.toString() || "",
+        });
+
+        /* ===========================
+         ACQUISITION
+         (percentage not returned, keep empty)
+      =========================== */
+        setAcquisition({
+          acquisitionPercentage:
+            project.purchase?.acquisitionCostPercentage?.toString() || "",
+        });
+
+        /* ===========================
+         LOTS
+      =========================== */
+        if (project.lots?.length) {
+          setLots(
+            project.lots.map((lot, index) => ({
+              id: Date.now() + index,
+              name: lot.name || `Lot ${index + 1}`,
+              resale: lot.resalePrice?.toString() || "",
+              area: lot.area?.toString() || "",
+              vat: lot.vatType || "Exonéré de TVA",
+              balance: lot.balance?.toString() || "",
+            }))
+          );
+        }
+
+        /* ===========================
+         EXPENSES
+      =========================== */
+        if (project.expenses?.length) {
+          setExpenses(
+            project.expenses.map((e, index) => ({
+              id: Date.now() + index,
+              label: e.label || "",
+              price: e.priceExclTax?.toString() || "",
+              vatRate: e.vatRate?.toString() || "",
+            }))
+          );
+        }
+
+        /* ===========================
+         FINANCING
+      =========================== */
+        if (project.financing) {
+          setFinancing({
+            applicationFee: project.financing.applicationFee?.toString() || "",
+            downPaymentRate:
+              project.financing.contributionPercentage?.toString() || "",
+            loanInterestRate: project.financing.interestRate?.toString() || "",
+            loanDuration: project.financing.durationMonths?.toString() || "",
+            commissionRate: project.financing.commissionRate?.toString() || "",
+            commissionDuration:
+              project.financing.commissionDurationMonths?.toString() || "",
+            mortgageRate: project.financing.montageRate?.toString() || "",
+            downPaymentAuto: "",
+            loanInterest: "",
+            commitmentFees: "",
+            mortgageFees: "",
+          });
+        }
+      } catch (err) {
+        console.error("FETCH PROJECT ERROR:", err);
+        toast.error("Unable to load project data");
+      }
+    };
+
+    fetchProject();
+  }, [id]);
 
   // submit state
   const [submitting, setSubmitting] = useState(false);
-  const [draftSaving , setDraftSaving] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
   const [apiError, setApiError] = useState(null);
   const toNumber = (v) => (v === "" || v === null ? 0 : Number(v));
 
@@ -88,7 +191,7 @@ export default function EditReport() {
       resale: "",
       area: "",
       price: "",
-      vat: "Exempt",
+      vat: "",
       balance: "",
     };
   }
@@ -150,15 +253,29 @@ export default function EditReport() {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
 
-  const totalExpenseCost = useMemo(() => {
-    const total = expenses.reduce((sum, e) => {
-      const price = Number(e.price || 0);
-      const vat = (price * Number(e.vatRate || 0)) / 100;
-      return sum + price + vat;
-    }, 0);
+  // const totalExpenseCost = useMemo(() => {
+  //   const total = expenses.reduce((sum, e) => {
+  //     const price = Number(e.price || 0);
+  //     const vat = (price * Number(e.vatRate || 0)) / 100;
+  //     return sum + price + vat;
+  //   }, 0);
 
-    return Number(total.toFixed(0)); // remove 31638.600000000002 issue
-  }, [expenses]);
+  //   return Number(total.toFixed(0)); 
+  // }, [expenses]);
+  const totalExpenseCost = useMemo(() => {
+  const total = expenses.reduce((sum, e) => {
+    // Force whole numbers only
+    const price = Math.floor(Number(e.price || 0));
+    const vatRate = Math.floor(Number(e.vatRate || 0));
+
+    const vat = (price * vatRate) / 100;
+
+    return sum + price + vat;
+  }, 0);
+
+  return Math.floor(total);
+}, [expenses]);
+
 
   /* ===========================
      5. FINANCING
@@ -464,9 +581,9 @@ export default function EditReport() {
     console.log(payload);
     try {
       const res = await axios.post(
-        "https://jytec-investment-api.onrender.com/api/project/save",
+        "https://api.emibocquillon.fr/api/project/save",
         payload,
-        { withCredentials: true }
+        authConfig
       );
 
       toast.success("Operation analysis submitted successfully", {
@@ -490,9 +607,8 @@ export default function EditReport() {
     }
   };
 
-
   // save as draft validation
-   const draftValidate = () => {
+  const draftValidate = () => {
     /* ========= BASIC PROJECT INFO ========= */
     if (!projectName.trim()) {
       toast.info("Project name is required");
@@ -512,120 +628,122 @@ export default function EditReport() {
   };
 
   // ===========================
-// SAVE AS DRAFT (NO VALIDATION)
-// ===========================
-const handleSaveDraft = async () => {
-   
-   if (!draftValidate()) {
+  // SAVE AS DRAFT (NO VALIDATION)
+  // ===========================
+  const handleSaveDraft = async () => {
+    if (!draftValidate()) {
       return; // ⛔ stop saving draft
     }
 
-  setDraftSaving(true);
-  setApiError(null);
+    setDraftSaving(true);
+    setApiError(null);
 
-  // payload allows incomplete data
-  const payload = {
-    name: projectName || null,
-    address: projectAddress || null,
+    // payload allows incomplete data
+    const payload = {
+      name: projectName || null,
+      address: projectAddress || null,
 
-    purchase: {
-      faiPrice: toNumber(purchase.faiPrice),
-      agencyFees: toNumber(purchase.agencyFees),
-      acquisitionCost: toNumber(notaryFeesAuto),
-      totalAcquisitionCost: toNumber(acquisitionCostAuto),
-    },
+      purchase: {
+        faiPrice: toNumber(purchase.faiPrice),
+        agencyFees: toNumber(purchase.agencyFees),
+        acquisitionCost: toNumber(notaryFeesAuto),
+        totalAcquisitionCost: toNumber(acquisitionCostAuto),
+      },
 
-    lots: lotsWithTotals.map((lot) => ({
-      id: lot.id,
-      name: lot.name || null,
-      resalePrice: toNumber(lot.resale),
-      area: toNumber(lot.area),
-      pricePerM2: toNumber(lot.pricePerM2 || 0),
-      vatType: lot.vat || null,
-      vatAmount: toNumber(lot.vatAmount || 0),
-      totalWithVat: toNumber(lot.totalWithVat || 0),
-      balance: toNumber(lot.balance || 0),
-    })),
+      lots: lotsWithTotals.map((lot) => ({
+        id: lot.id,
+        name: lot.name || null,
+        resalePrice: toNumber(lot.resale),
+        area: toNumber(lot.area),
+        pricePerM2: toNumber(lot.pricePerM2 || 0),
+        vatType: lot.vat || null,
+        vatAmount: toNumber(lot.vatAmount || 0),
+        totalWithVat: toNumber(lot.totalWithVat || 0),
+        balance: toNumber(lot.balance || 0),
+      })),
 
-    expenses: expenses.map((e) => ({
-      id: e.id,
-      label: e.label || null,
-      priceExclTax: toNumber(e.price),
-      vatRate: toNumber(e.vatRate),
-    })),
+      expenses: expenses.map((e) => ({
+        id: e.id,
+        label: e.label || null,
+        priceExclTax: toNumber(e.price),
+        vatRate: toNumber(e.vatRate),
+      })),
 
-    financing: {
-      applicationFee: toNumber(financing.applicationFee),
-      contributionPercentage: toNumber(financing.downPaymentRate),
-      contribution: toNumber(downPaymentAuto),
-      interestRate: toNumber(financing.loanInterestRate),
-      durationMonths: toNumber(financing.loanDuration),
-      loanInterest: toNumber(loanInterestAuto),
-      commissionRate: toNumber(financing.commissionRate),
-      commissionDurationMonths: toNumber(financing.commissionDuration),
-      commitmentFees: toNumber(commitmentFeesAuto),
-      montageRate: toNumber(financing.mortgageRate),
-      mortgageFees: toNumber(mortgageFeesAuto),
-      totalFinancing: toNumber(totalFinancing),
-    },
+      financing: {
+        applicationFee: toNumber(financing.applicationFee),
+        contributionPercentage: toNumber(financing.downPaymentRate),
+        contribution: toNumber(downPaymentAuto),
+        interestRate: toNumber(financing.loanInterestRate),
+        durationMonths: toNumber(financing.loanDuration),
+        loanInterest: toNumber(loanInterestAuto),
+        commissionRate: toNumber(financing.commissionRate),
+        commissionDurationMonths: toNumber(financing.commissionDuration),
+        commitmentFees: toNumber(commitmentFeesAuto),
+        montageRate: toNumber(financing.mortgageRate),
+        mortgageFees: toNumber(mortgageFeesAuto),
+        totalFinancing: toNumber(totalFinancing),
+      },
+    };
+
+    try {
+      const res = await axios.post(
+        "https://api.emibocquillon.fr/api/project/save-draft",
+        payload,
+        authConfig
+      );
+
+      toast.success("Draft saved successfully", {
+        toastId: "draft-success",
+      });
+
+      console.log("DRAFT SUCCESS:", res.data);
+
+      // optional: navigate to history or stay on page
+      navigate("/history");
+    } catch (err) {
+      console.error("DRAFT API ERROR:", err);
+
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Unable to save draft. Please try again.";
+
+      setApiError(message);
+      toast.error(message);
+    } finally {
+      setDraftSaving(false);
+    }
   };
 
-  try {
-    const res = await axios.post(
-      "https://jytec-investment-api.onrender.com/api/project/save-draft",
-      payload,
-      { withCredentials: true }
-    );
-
-    toast.success("Draft saved successfully", {
-      toastId: "draft-success",
+  // discard button logic
+  const handleDiscard = () => {
+    setProjectName("");
+    setProjectAddress("");
+    setPurchase({ faiPrice: "", agencyFees: "" });
+    setAcquisition({
+      acquisitionCost: "",
+      notaryFees: "",
+      acquisitionPercentage: "",
     });
-
-    console.log("DRAFT SUCCESS:", res.data);
-
-    // optional: navigate to history or stay on page
-    navigate("/history");
-  } catch (err) {
-    console.error("DRAFT API ERROR:", err);
-
-    const message =
-      err.response?.data?.message ||
-      err.response?.data?.error ||
-      "Unable to save draft. Please try again.";
-
-    setApiError(message);
-    toast.error(message);
-  } finally {
-    setDraftSaving(false);
-  }
-};
-
-// discard button logic
-const handleDiscard = () => {
-  setProjectName("");
-  setProjectAddress("");
-  setPurchase({ faiPrice: "", agencyFees: "" });
-  setAcquisition({ acquisitionCost: "", notaryFees: "", acquisitionPercentage: "" });
-  setLots([createLot(1), createLot(2)]);
-  setExpenses([
-    { id: 1, label: "", price: "", vatRate: "" },
-    { id: 2, label: "", price: "", vatRate: "" },
-  ]);
-  setFinancing({
-    applicationFee: "",
-    downPaymentAuto: "",
-    downPaymentRate: "",
-    loanInterestRate: "",
-    loanInterest: "",
-    loanDuration: "",
-    commissionRate: "",
-    commissionDuration: "",
-    commitmentFees: "",
-    mortgageFees: "",
-  });
-   toast.success("Form discarded successfully");
-};
-
+    setLots([createLot(1), createLot(2)]);
+    setExpenses([
+      { id: 1, label: "", price: "", vatRate: "" },
+      { id: 2, label: "", price: "", vatRate: "" },
+    ]);
+    setFinancing({
+      applicationFee: "",
+      downPaymentAuto: "",
+      downPaymentRate: "",
+      loanInterestRate: "",
+      loanInterest: "",
+      loanDuration: "",
+      commissionRate: "",
+      commissionDuration: "",
+      commitmentFees: "",
+      mortgageFees: "",
+    });
+    toast.success("Form discarded successfully");
+  };
 
   /* ===========================
      UI (UNCHANGED)
@@ -637,11 +755,10 @@ const handleDiscard = () => {
         {/* PAGE HEADER */}
         <div className="text-center mb-12">
           <h1 className="text-3xl heading font-semibold text-gray-900">
-            Edit Report
+            Modifier le rapport
           </h1>
           <p className="text-xl text-gray-500 mt-3 max-w-xl mx-auto">
-            Fill the information about your real estate project to obtain a
-            detail analysis of its profitability
+            Remplissez les détails de votre projet immobilier pour recevoir une analyse détaillée de sa rentabilité.
           </p>
         </div>
 
@@ -649,7 +766,7 @@ const handleDiscard = () => {
         <Section className="">
           <label>
             <span className="text-gray-800 text-lg font-semibold">
-              Project Name
+              Nom du projet
             </span>
 
             <input
@@ -666,7 +783,7 @@ const handleDiscard = () => {
         <Section className=" ">
           <label>
             <span className="text-gray-800 text-lg font-semibold">
-              Project Address
+              Adresse du projet
             </span>
 
             <input
@@ -681,12 +798,12 @@ const handleDiscard = () => {
 
         {/* PURCHASE */}
         <Section>
-          <SectionTitle icon={<FaHome size={16} />}>Purchase</SectionTitle>
+          <SectionTitle icon={<FaHome size={16} />}>Achat </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                FAI price (€)
+                Prix FAI (€)
               </span>
               <Input
                 numeric
@@ -698,7 +815,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Agency fees (€)
+                Frais d’agence (€)
               </span>
               <Input
                 numeric
@@ -713,13 +830,13 @@ const handleDiscard = () => {
         {/* ACQUISITION COST */}
         <Section>
           <SectionTitle icon={<FaReceipt size={16} />}>
-            Acquisition Fees
+            Frais d’acquisition 
           </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Acquisition Percentage (%)
+                Pourcentage d’acquisition (%)
               </span>
               <Input
                 numeric
@@ -735,7 +852,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Notary fees (€) (Acquisition cost)
+                Frais de notaire (€) 
               </span>
               <Input
                 numeric
@@ -747,7 +864,7 @@ const handleDiscard = () => {
 
             <label className=" md:col-span-2">
               <span className="text-gray-400 text-sm  font-semibold">
-                Total Acquisition cost (€)
+                Coût total d’acquisition (€)
               </span>
               <Input
                 numeric
@@ -778,12 +895,12 @@ const handleDiscard = () => {
               <thead>
                 <tr className="text-left text-sm ">
                   {/* <th className="px-7 py-2">N</th> */}
-                  <th className="px-4">Lot name</th>
-                  <th className="px-4">Resale price</th>
-                  <th className="px-4">Area (m²)</th>
-                  <th className="px-4">Price / m²</th>
-                  <th className="px-4">VAT</th>
-                  <th className="px-1">Balance (%)</th>
+                  <th className="px-4">Nom du lot </th>
+                  <th className="px-4">Prix de revente</th>
+                  <th className="px-4">Surface (m²)</th>
+                  <th className="px-4">Prix / m²</th>
+                  <th className="px-4">TVA</th>
+                  <th className="px-1">Équilibre (%)</th>
                   <th />
                 </tr>
               </thead>
@@ -791,13 +908,6 @@ const handleDiscard = () => {
               <tbody>
                 {lotsWithTotals.map((lot) => (
                   <tr key={lot.id} className="hover:bg-gray-50">
-                    {/* N (ID badge) */}
-                    {/* <td className="px-4 py-4">
-                    <span className="bg-gray-100 px-3 py-1 rounded-full">
-                      {lot.id}
-                    </span>
-                  </td> */}
-
                     {/* Lot name (TEXT INPUT) */}
                     <td className="px-4 py-4">
                       <Cell
@@ -842,7 +952,7 @@ const handleDiscard = () => {
                         }
                         className="w-full bg-gray-100 border border-gray-400 rounded-lg px-3 py-2 text-xs"
                       >
-                        <option value="Exonéré de TVA">Exonéré de TVA </option>
+                        <option value="Exonéré de TVA">Exonéré de TVA </option> 
                         <option value="TVA Intégrale">TVA Intégrale </option>
                         <option value="TVA sur Marge">TVA sur Marge </option>
                       </select>
@@ -901,7 +1011,7 @@ const handleDiscard = () => {
             </table>
           </div>
 
-          <TotalBar label="Total resale" value={`${totalResale} €`} />
+          <TotalBar label="Total revente" value={`${totalResale} €`} />
         </Section>
 
         {/* EXPENSES */}
@@ -909,7 +1019,7 @@ const handleDiscard = () => {
           {/* HEADER + ACTION */}
           <div className="flex items-center justify-between mb-7">
             <SectionTitle icon={<FaReceipt size={16} />}>
-              <h1 className="text-xl heading">Expenses</h1>
+              <h1 className="text-xl heading">Dépenses</h1>
             </SectionTitle>
 
             <button
@@ -927,7 +1037,7 @@ const handleDiscard = () => {
               }
               className="flex items-center gap-2 bg-[#0f3d2e] text-white px-4 py-2 rounded-xl text-sm md:text-md font-medium"
             >
-              <FaPlus size={10} /> Add an expense
+              <FaPlus size={10} /> Ajouter une dépense
             </button>
           </div>
 
@@ -936,11 +1046,11 @@ const handleDiscard = () => {
             <table className="min-w-max w-full  text-xs text-gray-600">
               <thead>
                 <tr className="text-left text-sm">
-                  <th className="pb-3 font-medium">Label</th>
-                  <th className="font-medium">Price excl. tax (€)</th>
-                  <th className="font-medium">VAT rate (%)</th>
-                  <th className="font-medium pr-6">VAT (€)</th>
-                  <th className="font-medium ">Price incl. VAT (€)</th>
+                  <th className="pb-3 font-medium">Intitulé</th>
+                  <th className="font-medium">Prix HT (€)</th>
+                  <th className="font-medium">Taux de TVA (%)</th>
+                  <th className="font-medium pr-6">TVA (€)</th>
+                  <th className="font-medium ">Prix TTC (€)</th>
                   <th />
                 </tr>
               </thead>
@@ -1011,11 +1121,11 @@ const handleDiscard = () => {
                       </td>
 
                       <td className="px-4 py-4  font-medium text-gray-900">
-                        {vat}
+                        {vat.toFixed(0)}
                       </td>
 
                       <td className="px-4 py-4 font-medium text-gray-900">
-                        {total}
+                        {total.toFixed(0)}
                       </td>
 
                       <td className="px-4 py-4 text-right">
@@ -1037,7 +1147,7 @@ const handleDiscard = () => {
           {/* TOTAL */}
           <div className="flex items-center justify-between rounded-xl mt-5 bg-gray-100 px-6 py-4">
             <span className="text-sm font-medium text-gray-600">
-              Total cost of expense
+              Coût total des dépenses 
             </span>
 
             <span className="text-xl font-semibold text-gray-900">
@@ -1049,13 +1159,13 @@ const handleDiscard = () => {
         {/* FINANCING */}
         <Section>
           <SectionTitle icon={<AiOutlineBank size={18} />}>
-            Financing
+            Financement 
           </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Application fee (€)
+                Frais de dossier (€)
               </span>
               <Input
                 numeric
@@ -1065,21 +1175,9 @@ const handleDiscard = () => {
               />
             </label>
 
-            {/* <label>
-            <span className="text-gray-400 text-sm  font-semibold">
-              Down Payment (€)
-            </span>
-            <Input
-              numeric
-              placeholder="250,000"
-              value={financing.downPayment}
-              onChange={(v) => updateFinancing("downPayment", v)}
-            />
-          </label> */}
-
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Down Payment Rate (%)
+                Taux d’apport (%)
               </span>
 
               <Input
@@ -1121,7 +1219,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Down Payment (€)
+                Apport personnel (€)
               </span>
               <Input
                 numeric
@@ -1133,7 +1231,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Loan Interest Rate (%)
+                Taux d’intérêt (%)
               </span>
 
               <Input
@@ -1175,7 +1273,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Loan Duration (months)
+                Durée du prêt (mois)
               </span>
               <Input
                 numeric
@@ -1187,7 +1285,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Loan Interest (€)
+                Intérêts d’emprunt (€)
               </span>
               <Input
                 numeric
@@ -1199,7 +1297,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Commission Rate (%)
+                Taux de commission (%)
               </span>
 
               <Input
@@ -1241,7 +1339,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Commission Duration (months)
+                Durée de commission (mois)
               </span>
               <Input
                 numeric
@@ -1253,7 +1351,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Commitment Fees (€)
+                Frais de commission (€)
               </span>
               <Input
                 numeric
@@ -1265,7 +1363,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Mortgage rate (%)
+                Taux de montage (%)
               </span>
 
               <Input
@@ -1307,7 +1405,7 @@ const handleDiscard = () => {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Mortgage Fees (€)
+                Frais de montage (€)
               </span>
               <Input
                 numeric
@@ -1318,7 +1416,7 @@ const handleDiscard = () => {
             </label>
           </div>
 
-          <TotalBar label="Total financing" value={`${totalFinancing} €`} />
+          <TotalBar label="Coût total du financement " value={`${totalFinancing} €`} />
         </Section>
 
         {/* buttons */}
@@ -1329,17 +1427,17 @@ const handleDiscard = () => {
             disabled={submitting}
             className="w-full md:w-auto px-4 py-2 rounded-2xl hover:bg-gray-200 border-2 border-[#00332B] text-[#00332B] font-semibold text-lg"
           >
-            <FaXmark className="inline-block mr-2" /> Discard
+            <FaXmark className="inline-block mr-2" /> Annuler 
           </button>
 
           <button
             type="button"
-             onClick={handleSaveDraft}  
+            onClick={handleSaveDraft}
             className="w-full md:w-auto px-4 py-2 rounded-2xl hover:bg-gray-200 border-2 border-[#00332B] text-[#00332B] text-lg font-semibold"
             disabled={draftSaving}
-         >
+          >
             <LuFileText className="inline-block mr-2" />
-            {draftSaving ? "Saving..." : "Save as Draft"}
+            {draftSaving ? "Saving..." : "Enregistrer en brouillon"}
           </button>
 
           <button
@@ -1350,7 +1448,7 @@ const handleDiscard = () => {
             }`}
           >
             <LuFileText className="inline-block mr-2" />
-            {submitting ? "Submitting..." : "Submit Form"}
+            {submitting ? "Submitting..." : "Valider l’analyse"}
           </button>
         </div>
       </form>
@@ -1424,47 +1522,6 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
   );
 }
 
-// function Cell({ value, onChange, placeholder, numeric = false, min, max }) {
-//   const handleChange = (e) => {
-
-//     let val = e.target.value;
-
-//     if (val === "") {
-//       onChange("");
-//       return;
-//     }
-
-//     if (numeric) {
-//       val = val.replace(",", ".");
-
-//       // same permissive decimal pattern
-//       const decimalPattern = /^(\d+(\.\d*)?|\.\d*)$/;
-//       if (!decimalPattern.test(val)) return;
-
-//       if (!isNaN(Number(val))) {
-//         const num = Number(val);
-
-//         if (min !== undefined && num < min) return;
-//         if (max !== undefined && num > max) return;
-//       }
-
-//       onChange(val);
-//       return;
-//     }
-
-//     onChange(val);
-//   };
-
-//   return (
-//     <input
-//       value={value}
-//       placeholder={placeholder}
-//       inputMode={numeric ? "decimal" : "text"}
-//       onChange={handleChange}
-//       className="bg-gray-100 rounded-lg px-3 py-3 w-full text-sm outline-none"
-//     />
-//   );
-// }
 function Cell({ value, onChange, numeric, ...props }) {
   function formatIndianNumber(value) {
     if (value === null || value === undefined || value === "") return "";

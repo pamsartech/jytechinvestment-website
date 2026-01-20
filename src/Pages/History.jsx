@@ -3,7 +3,6 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineFileDownload } from "react-icons/md";
 import { FiFileText, FiTrash2, FiClock, FiCalendar } from "react-icons/fi";
-import { HiPencilAlt } from "react-icons/hi";
 import { toast } from "react-toastify";
 
 export default function History() {
@@ -19,80 +18,91 @@ export default function History() {
   // track per-row loader
   const [downloadingId, setDownloadingId] = useState(null);
 
-  // ---------- FETCH ----------
-  const fetchSimulations = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const token = localStorage.getItem("authToken");
 
-      const res = await axios.get(
-        "https://jytec-investment-api.onrender.com/api/project/getall",
-        { withCredentials: true }
-      );
-
-      const projects = res.data.projects || res.data;
-
-      // const mapped = projects.map((project) => ({
-      //   id: project._id,
-      //   title: project.name,
-      //   date: new Date().toLocaleString(),
-      //   tva:
-      //     project?.expenses?.reduce((sum, e) => {
-      //       const vat = ((e.priceExclTax || 0) * (e.vatRate || 0)) / 100;
-      //       return sum + vat;
-      //     }, 0) + " CHF",
-      //   margin:
-      //     project?.lots?.reduce((sum, lot) => {
-      //       return sum + (lot.resalePrice || 0);
-      //     }, 0) + " CHF",
-      // }));
-
-      const mapped = projects.map((project) => ({
-        id: project._id,
-        title: project.name,
-        date: new Date().toLocaleString(),
-
-        // SAFELY read type from API (Draft / Purchase)
-        status: project?.type === "purchase" ? "purchase" : "draft",
-
-        tva:
-          project?.expenses?.reduce((sum, e) => {
-            const vat = ((e.priceExclTax || 0) * (e.vatRate || 0)) / 100;
-            return sum + vat;
-          }, 0) + " CHF",
-
-        margin:
-          project?.lots?.reduce((sum, lot) => {
-            return sum + (lot.resalePrice || 0);
-          }, 0) + " CHF",
-      }));
-
-      setSimulations(mapped);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load simulations");
-    } finally {
-      setLoading(false);
-    }
+  const authConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   };
+
+  // ---------- FETCH ----------
+ const fetchSimulations = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const res = await axios.get(
+      "https://api.emibocquillon.fr/api/project/getall",
+      authConfig
+    );
+
+    const projects = res.data.projects || res.data;
+
+    const mapped = projects.map((project) => ({
+      id: project._id,
+      title: project.name,
+      date: new Date(project.createdAt).toLocaleString(),
+
+      // SAFELY read type from API (Draft / Purchase)
+      status: project?.type === "purchase" ? "purchase" : "draft",
+
+      tva: project?.expenses?.reduce((sum, e) => {
+        const vat = ((e.priceExclTax || 0) * (e.vatRate || 0)) / 100;
+        return sum + vat;
+      }, 0),
+
+      margin: project?.lots?.reduce((sum, lot) => {
+        return sum + (lot.resalePrice || 0);
+      }, 0),
+    }));
+
+    setSimulations(mapped);
+  } catch (err) {
+    console.error(err);
+
+    const status = err?.response?.status;
+    const message =
+      err?.response?.data?.message || "Session expired. Please log in again.";
+
+    setError(message);
+    toast.error(message, {
+      position: "bottom-right",
+      autoClose: 3000,
+    });
+
+    // Redirect to login on auth failure
+    if (status === 401 || status === 403) {
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 3000);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ---------- DELETE ----------
   const handleDelete = async (id) => {
     try {
-      await axios.delete(
-        `https://jytec-investment-api.onrender.com/api/project/delete/${id}`,
-        { withCredentials: true }
+      await axios.post(
+        `https://api.emibocquillon.fr/api/project/soft-delete/${id}`,
+        {}, // 👈 body MUST exist
+        authConfig // 👈 headers go here
       );
+
       setSimulations((prev) => prev.filter((p) => p.id !== id));
       toast.success("Simulation deleted");
     } catch (err) {
       console.error(err);
-      toast.error("Delete failed");
+
+      toast.error(err?.response?.data?.message || "Delete failed");
     }
   };
 
   // ---------- ACTION HANDLERS ----------
-  const handleOpen = (id) => console.log("open", id);
+  // const handleOpen = (id) => console.log("open", id);
 
   // ---------- DOWNLOAD WITH LOADER + TOAST ----------
   const handleDownload = async (id, status) => {
@@ -107,10 +117,10 @@ export default function History() {
       toast.info("Generating report…");
 
       const res = await axios.get(
-        `https://jytec-investment-api.onrender.com/api/project/generate-report/${id}`,
+        `https://api.emibocquillon.fr/api/project/generate-report/${id}`,
         {
           responseType: "blob",
-          withCredentials: true,
+          ...authConfig,
         }
       );
 
@@ -162,7 +172,7 @@ export default function History() {
 
   const statusLabels = {
     draft: "Draft",
-    purchase: "Completed",
+    purchase: "Terminé ",
   };
 
   return (
@@ -175,10 +185,10 @@ export default function History() {
           </div>
           <div>
             <h1 className="text-2xl md:text-4xl font-semibold text-white">
-              History
+              Historique 
             </h1>
             <p className="text-sm md:text-md text-white/70">
-              Find all your recorded simulations
+              Retrouvez toutes vos simulations enregistrées
             </p>
           </div>
         </div>
@@ -220,14 +230,19 @@ export default function History() {
                   </span>
                 </div>
 
+                <p className="mt-1 mb-4 flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                  {/* <FiCalendar size={14} /> */}
+                  ID du rapport: {item.id}
+                </p>
+
                 <p className="my-1 flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                   <FiCalendar size={14} />
                   {item.date}
                 </p>
 
                 <p className="text-xs sm:text-sm text-gray-500">
-                  TVA: <span className="text-black mr-2">{item.tva}</span>
-                  Margin: <span className="text-black">{item.margin}</span>
+                  TVA: <span className="text-black mr-2">{item.tva}€</span>
+                  Margin: <span className="text-black">{item.margin}€</span>
                 </p>
               </div>
             </div>
@@ -235,23 +250,6 @@ export default function History() {
             {/* Right actions */}
             <div className="flex flex-wrap md:flex-nowrap items-center justify-center md:justify-end gap-3 mt-2 md:mt-0">
               {/* DOWNLOAD */}
-              {/* <button
-                onClick={() => handleDownload(item.id)}
-                disabled={downloadingId === item.id}
-                className={`flex items-center ${
-                  downloadingId === item.id
-                    ? "opacity-60 cursor-not-allowed"
-                    : ""
-                }`}
-              > */}
-
-              <button
-                onClick={() => navigate(`/edit-report/${item.id}`)}
-                className="hover:scale-110 transition"
-              >
-                <HiPencilAlt className="text-md md:text-xl" />
-              </button>
-
 
               <button
                 onClick={() => handleDownload(item.id, item.status)}
@@ -268,32 +266,47 @@ export default function History() {
                 }`}
               >
                 {item.status === "draft" ? (
-                  <MdOutlineFileDownload
-                    className="inline-block opacity-80 text-lg md:text-2xl"
-                    
-                  />
+                  <MdOutlineFileDownload className="inline-block opacity-80 text-lg md:text-2xl" />
                 ) : downloadingId === item.id ? (
                   <span className="text-sm">Downloading…</span>
                 ) : (
-                  <MdOutlineFileDownload className="inline-block text-lg md:text-2xl"  />
+                  <MdOutlineFileDownload className="inline-block text-lg md:text-2xl" />
                 )}
               </button>
 
               {/* REPORT */}
+
               <button
                 onClick={() => navigate(`/simulation/${item.id}`)}
-                className="px-3 py-2 text-xs sm:text-sm border border-green-900 rounded-xl"
+                disabled={item.status === "draft"}
+                title={
+                  item.status === "draft"
+                    ? "Simulation is disabled for Draft projects"
+                    : "View simulation report"
+                }
+                className={`px-3 py-2 text-xs sm:text-sm border rounded-xl transition ${
+                  item.status === "draft"
+                    ? "border-gray-600 text-gray-600 cursor-not-allowed opacity-50"
+                    : "border-green-900 text-green-900 hover:bg-green-50"
+                }`}
               >
-                Simulation Report
+                Rapport de simulation
               </button>
 
               {/* OPEN */}
               <button
-                onClick={() => handleOpen(item.id)}
+                onClick={() => navigate(`/edit-report/${item.id}`)}
                 className="rounded-lg bg-[#063F34] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-white hover:bg-[#052F28] transition"
               >
-                Open
+                {item.status === "draft" ? "Edit" : "Copier "}
               </button>
+
+              {/* <button
+                onClick={() => navigate(`/edit-report/${item.id}`)}
+                className="rounded-lg bg-[#063F34] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-white hover:bg-[#052F28] transition"
+              >
+                Edit
+              </button> */}
 
               {/* DELETE */}
               <button
@@ -318,7 +331,7 @@ export default function History() {
                   : "bg-[#063F34] text-white"
               }`}
             >
-              Previous
+              Précédent 
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
@@ -344,7 +357,7 @@ export default function History() {
                   : "bg-[#063F34] text-white"
               }`}
             >
-              Next
+              Suivant
             </button>
           </div>
         )}

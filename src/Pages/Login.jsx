@@ -3,6 +3,9 @@ import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
+import PublicNavbar from "../Components/PublicNavbar";
+import PublicFooter from "../Components/PublicFooter";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -22,17 +25,15 @@ export default function Login() {
     const errors = {};
 
     if (!email.trim()) {
-      errors.email = "Email is required";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
-      errors.email = "Enter a valid email address";
+      errors.email = "L'adresse e-mail est obligatoire.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "S'il vous plaît, mettez une adresse email valide.";
     }
 
     if (!password) {
-      errors.password = "Password is required";
+      errors.password = "Le mot de passe est requis.";
     } else if (password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
+      errors.password = "Le mot de passe doit comporter au moins 6 caractères.";
     }
 
     setFieldErrors(errors);
@@ -52,27 +53,27 @@ export default function Login() {
       setLoading(true);
 
       const response = await axios.post(
-        "https://jytec-investment-api.onrender.com/api/auth/signin",
+        "https://api.emibocquillon.fr/api/auth/signin",
         {
           Email: email,
           Password: password,
         },
-        {
-          // headers: {
-          //   "Content-Type": "application/json",
-          // },
-          withCredentials: true 
-        }
       );
-        console.log(response);
+
       const { token } = response.data;
       login(token);
+
+      // ✅ Success toast
+      toast.success("Connexion réussie. Bienvenue de retour !");
       navigate("/");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Invalid email or password"
-      );
+      const message =
+        err.response?.data?.message || "Invalid email or password";
+
+      setError(message);
+
+      // ❌ Failure toast
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -80,16 +81,18 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-white">
+      <PublicNavbar />
       {/* Top Header */}
+
       <div className="bg-[#063c35] py-10 text-center text-white">
         <div className="flex items-center justify-center gap-3 text-xl font-semibold">
           <span className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <FaUser />
           </span>
-          <h1 className="text-2xl md:text-3xl">Login</h1>
+          <h1 className="text-2xl md:text-3xl">Se connecter</h1>
         </div>
-        <p className="text-lg text-white/70 mt-1">
-          Log in to continue your profitability analysis
+        <p className="text-lg text-white/70 mt-1 px-2">
+         Connectez-vous pour poursuivre votre analyse de rentabilité.
         </p>
       </div>
 
@@ -100,7 +103,7 @@ export default function Login() {
             <span className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
               <FaLock className="text-gray-600" />
             </span>
-            <h2 className="text-xl font-semibold">Login</h2>
+            <h2 className="text-xl font-semibold">Se connecter</h2>
           </div>
 
           {error && (
@@ -129,16 +132,14 @@ export default function Login() {
                 />
               </div>
               {fieldErrors.email && (
-                <p className="text-red-500 text-xs mt-1">
-                  {fieldErrors.email}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>
               )}
             </div>
 
             {/* Password */}
             <div>
               <label className="block text-sm text-gray-600 font-medium mb-1">
-                Password
+                Mot de passe
               </label>
               <div className="flex items-center bg-gray-100 rounded-lg px-3">
                 <FaLock className="text-gray-400" />
@@ -167,7 +168,7 @@ export default function Login() {
                 disabled={loading}
                 className="flex-1 bg-[#063c35] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#052f2a] transition disabled:opacity-60"
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Connexion..." : "Se connecter"}
               </button>
 
               <button
@@ -175,12 +176,21 @@ export default function Login() {
                 onClick={() => navigate("/create-account")}
                 className="flex-1 bg-gray-100 py-3 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
               >
-                Create an account
+                Créer un compte
               </button>
             </div>
           </form>
+
+          <p
+            onClick={() => navigate("/password-reset")}
+            className="text-end text-sm text-gray-600 underline mt-1 cursor-pointer"
+          >
+            Mot de passe oublié ?
+          </p>
         </div>
       </div>
+
+      <PublicFooter />
     </div>
   );
 }
