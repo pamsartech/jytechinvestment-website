@@ -10,32 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node (Node 20 is REQUIRED for your deps)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 🔧 CHANGE 1: run npm in frontend folder
+      # 3️⃣ Install dependencies (IMPORTANT FIX)
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: Front-End
         run: npm install
 
-      # 🔧 CHANGE 2: build frontend in correct folder
+      # 4️⃣ Build frontend
       - name: Build frontend
-        working-directory: frontend
+        working-directory: Front-End
         run: npm run build
 
-      # 🔧 CHANGE 3: deploy correct build folder
-      - name: Deploy via SSH
+      # 5️⃣ Deploy via SSH
+      - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
+            echo "Deploying frontend..."
             rm -rf /var/www/dev-app/frontend/*
-            cp -r /home/${{ secrets.SSH_USER }}/frontend/dist/* /var/www/dev-app/frontend/
+            cp -r /home/${{ secrets.SSH_USER }}/jytechinvestment-website/Front-End/dist/* /var/www/dev-app/frontend/
             sudo systemctl reload nginx
