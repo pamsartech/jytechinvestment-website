@@ -2,30 +2,45 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         working-directory: Front-End
         run: npm install
 
+      # 4️⃣ Build frontend
       - name: Build frontend
         working-directory: Front-End
         run: npm run build
 
-      # 🔹 COPY BUILD FILES TO SERVER
+      # 5️⃣ Clean target directory on server
+      - name: Clean frontend folder on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf /var/www/dev-app/frontend/*
+
+      # 6️⃣ Upload build files
       - name: Upload frontend build
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -34,9 +49,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "Front-End/dist/*"
           target: "/var/www/dev-app/frontend"
-          strip_components: 2
 
-      # 🔹 RELOAD NGINX
+      # 7️⃣ Reload nginx
       - name: Reload nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
