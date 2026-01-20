@@ -2,44 +2,46 @@ name: Deploy Frontend
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node (Node 20 is REQUIRED for your deps)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 3️⃣ Install dependencies (IMPORTANT FIX)
       - name: Install dependencies
         working-directory: Front-End
         run: npm install
 
-      # 4️⃣ Build frontend
       - name: Build frontend
         working-directory: Front-End
         run: npm run build
 
-      # 5️⃣ Deploy via SSH
-      - name: Deploy to server
+      # 🔹 COPY BUILD FILES TO SERVER
+      - name: Upload frontend build
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "Front-End/dist/*"
+          target: "/var/www/dev-app/frontend"
+          strip_components: 2
+
+      # 🔹 RELOAD NGINX
+      - name: Reload nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
           script: |
-            echo "Deploying frontend..."
-            rm -rf /var/www/dev-app/frontend/*
-            cp -r /home/${{ secrets.SSH_USER }}/jytechinvestment-website/Front-End/dist/* /var/www/dev-app/frontend/
             sudo systemctl reload nginx
