@@ -28,7 +28,7 @@ function Home () {
 
                <div className="flex justify-center gap-4 my-10">
                    <button onClick={() => navigate("/history")} className="px-4 py-2 rounded-xl border">
-                     <LuFileText className="inline-block mr-2" /> Voir le rapport 
+                     <LuFileText className="inline-block mr-2" /> Voir le rappor
                    </button>
                    {/* <button className="px-4 py-2 rounded-xl border">
                      <MdOutlineFileDownload className="inline-block mr-2" />
