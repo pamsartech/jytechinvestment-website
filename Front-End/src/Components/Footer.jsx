@@ -26,7 +26,7 @@ export default function Footer() {
             <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
               Le simulateur de rentabilité immobilière premium pour
               investisseurs exigeants. Analysez, optimisez et sécurisez vos
-              projets immobiliers.
+              projets 
             </p>
 
             <ul className="mt-6 space-y-3 text-sm text-white/70">
