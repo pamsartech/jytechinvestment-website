@@ -2,6 +2,27 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+const normalizeUserRole = (apiRole) => {
+  if (!apiRole) return "user";
+
+  const role = apiRole.toLowerCase();
+
+  if (role === "invited") return "invited";
+  if (role === "user") return "user";
+
+  // Handle all premium variants (including backend typo)
+  if (
+    role === "premium" ||
+    role === "premium_user" ||
+    role === "permium_user" || // backend typo
+    role === "paid_user"
+  ) {
+    return "premium";
+  }
+
+  return "user";
+};
+
 export default function Profile() {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -11,9 +32,9 @@ export default function Profile() {
     password: "",
   });
 
-  const [profileImage, setProfileImage] = useState(
-    "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?q=80&w=200&auto=format&fit=crop",
-  );
+  // const [profileImage, setProfileImage] = useState(
+  //   "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?q=80&w=200&auto=format&fit=crop",
+  // );
 
   const token = localStorage.getItem("authToken");
 
@@ -22,6 +43,8 @@ export default function Profile() {
       Authorization: `Bearer ${token}`,
     },
   };
+
+  const [userRole, setUserRole] = useState(""); // invited | user | premium
 
   const [subscription, setSubscription] = useState({
     planName: "",
@@ -41,18 +64,32 @@ export default function Profile() {
 
   const [continueLoading, setContinueLoading] = useState(false);
 
+  const isInvitedUser = userRole === "invited";
+
+  const roleBadgeClasses = {
+    invited: "bg-blue-100 text-blue-700",
+    user: "bg-gray-100 text-gray-700",
+    premium: "bg-purple-100 text-purple-700",
+  };
+
+  const roleLabels = {
+    invited: "Utilisateur invité",
+    user: "Utilisateur Standard",
+    premium: "Utilisateur Premium",
+  };
+
   //confirm cancel subscription modal
   const confirmCancelSubscription = () => {
     toast.info(
       ({ closeToast }) => (
         <div className="flex flex-col gap-3">
-          <p>Are you sure you want to cancel your subscription?</p>
+          <p>Êtes-vous sûr de vouloir annuler votre abonnement ?</p>
           <div className="flex gap-3 justify-end">
             <button
               className="px-3 py-1 text-sm bg-gray-200 rounded"
               onClick={closeToast}
             >
-              Cancel
+              Annuler
             </button>
             <button
               className="px-3 py-1 text-sm bg-red-600 text-white rounded"
@@ -61,7 +98,7 @@ export default function Profile() {
                 handleCancelSubscription();
               }}
             >
-              Confirm
+              Confirmer
             </button>
           </div>
         </div>
@@ -169,6 +206,8 @@ export default function Profile() {
       if (res.data.success) {
         const user = res.data.user;
 
+        setUserRole(normalizeUserRole(user.role));
+
         setFormData((prev) => ({
           ...prev,
           firstName: user.FirstName || "",
@@ -273,9 +312,10 @@ export default function Profile() {
 
       <div className="bg-white rounded-2xl border border-gray-300 mx-3 sm:mx-6 lg:mx-20 p-4 sm:p-6 md:p-8">
         <h2 className="text-xl font-medium mb-6">Mes informations </h2>
-        <div>
-          <span
-            className={`inline-flex items-center justify-center px-4 py-1.5 rounded-full text-xs font-semibold
+        <div >
+          {/* subscription status */}
+            <span
+            className={`inline-flex items-center justify-center px-4 py-1.5 rounded-full mr-2 my-4 text-xs font-semibold
         ${
           subscriptionStatus.isActive
             ? "bg-green-100 text-green-700"
@@ -286,7 +326,18 @@ export default function Profile() {
               ? "Abonnement actif"
               : "Abonnement désactivé "}
           </span>
+
+          {/* user type status */}
+           <span
+            className={`inline-flex items-center justify-center px-4 py-1.5 rounded-full text-xs font-semibold ${
+              roleBadgeClasses[userRole] || "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {roleLabels[userRole] || "Utilisateur"}
+          </span>
         </div>
+        
+
         {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-5 mb-8">
           <div className="w-full">
@@ -295,10 +346,14 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={handleContinueSubscription}
-                disabled={continueLoading || subscriptionStatus.isActive}
+                disabled={
+                  continueLoading ||
+                  subscriptionStatus.isActive ||
+                  isInvitedUser
+                }
                 className={`px-6 py-2 rounded-lg text-sm font-semibold transition
     ${
-      subscriptionStatus.isActive
+      subscriptionStatus.isActive || isInvitedUser
         ? "bg-gray-300 text-gray-600 cursor-not-allowed"
         : "bg-green-600 text-white hover:bg-green-700"
     }
@@ -307,28 +362,32 @@ export default function Profile() {
               >
                 {continueLoading
                   ? "Processing..."
-                  : subscriptionStatus.isActive
-                    ? "Abonnement actif"
-                    : "Reprendre l’abonnement "}
+                  : isInvitedUser
+                    ? "Invited users cannot subscribe"
+                    : subscriptionStatus.isActive
+                      ? "Abonnement actif"
+                      : "Reprendre l’abonnement"}
               </button>
 
               {/* Cancel Subscription */}
               <button
                 type="button"
                 onClick={confirmCancelSubscription}
-                disabled={cancelLoading || isCancelled}
+                disabled={cancelLoading || isCancelled || isInvitedUser}
                 className={`px-6 py-2 rounded-lg text-sm font-semibold transition
           ${
-            isCancelled
+            isCancelled || isInvitedUser
               ? "bg-gray-300 text-gray-600 cursor-not-allowed"
               : "bg-red-600 text-white hover:bg-red-700"
           }`}
               >
                 {cancelLoading
                   ? "Cancelling..."
-                  : isCancelled
-                    ? "Abonnement annulé"
-                    : "Annuler l'abonnement"}
+                  : isInvitedUser
+                    ? "Action non autorisée"
+                    : isCancelled
+                      ? "Abonnement annulé"
+                      : "Annuler l'abonnement"}
               </button>
             </div>
           </div>
@@ -387,20 +446,24 @@ export default function Profile() {
           {/* Subscription Info */}
           <div className="flex-1 rounded-lg border border-gray-200 px-4 sm:px-6 py-4">
             <h2 className="text-lg font-semibold text-gray-700 border-b border-b-gray-300 pb-3 mb-4">
-              Informations d’abonnement 
+              Informations d’abonnement
             </h2>
 
             {/* Mobile / Tablet layout */}
             <div className="space-y-3 sm:hidden">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 font-medium">Nom de l’offre </span>
+                <span className="text-gray-500 font-medium">
+                  Nom de l’offre{" "}
+                </span>
                 <span className="font-semibold text-gray-700">
                   {subscription.planName}
                 </span>
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 font-medium">Date de début </span>
+                <span className="text-gray-500 font-medium">
+                  Date de début{" "}
+                </span>
                 <span className="font-semibold text-gray-700">
                   {subscription.startDate}
                 </span>
@@ -415,7 +478,7 @@ export default function Profile() {
 
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 font-medium">
-                 Jours restants
+                  Jours restants
                 </span>
                 <span className="font-semibold text-blue-600">
                   {subscription.daysRemaining} jours
@@ -425,8 +488,12 @@ export default function Profile() {
 
             {/* Desktop layout */}
             <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-              <span className="text-gray-500 font-semibold">Nom de l’offre </span>
-              <span className="text-gray-500 font-semibold">Date de début </span>
+              <span className="text-gray-500 font-semibold">
+                Nom de l’offre{" "}
+              </span>
+              <span className="text-gray-500 font-semibold">
+                Date de début{" "}
+              </span>
               <span className="text-gray-500 font-semibold">Date de fin</span>
               <span className="text-gray-500 font-semibold">
                 Jours restants
@@ -457,9 +524,7 @@ export default function Profile() {
               {subscription.totalReports}
             </span>
 
-            <span className="text-xs text-gray-500 mt-1">
-             Activité totale
-            </span>
+            <span className="text-xs text-gray-500 mt-1">Activité totale</span>
           </div>
         </div>
       </div>

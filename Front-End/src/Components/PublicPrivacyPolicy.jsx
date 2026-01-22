@@ -2,23 +2,57 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DOMPurIFY from "dompurify";
 import { FaRegFile } from "react-icons/fa";
-import PublicNavbar from "./PublicNavbar"
+import PublicNavbar from "./PublicNavbar";
 import PublicFooter from "./PublicFooter";
 import { BsArrowLeft } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@mui/material";
+
+const PublicPrivacyHeaderSkeleton = () => (
+  <div className="bg-[#063F34] px-6 py-10 md:py-20">
+    <div className="flex items-center gap-4 md:ml-10">
+      <Skeleton
+        variant="rectangular"
+        width={40}
+        height={40}
+        sx={{ bgcolor: "rgba(255,255,255,0.2)", borderRadius: 8 }}
+      />
+      <div className="flex items-center gap-4 w-full justify-center md:px-44">
+        <Skeleton
+          variant="circular"
+          width={44}
+          height={44}
+          sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+        />
+        <Skeleton
+          variant="text"
+          width={320}
+          height={36}
+          sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+        />
+      </div>
+    </div>
+  </div>
+);
+
+const PublicPrivacyContentSkeleton = () => (
+  <div className="space-y-4">
+    <Skeleton variant="text" width="55%" height={32} />
+    <Skeleton variant="text" width="30%" />
+
+    {Array.from({ length: 12 }).map((_, i) => (
+      <Skeleton key={i} variant="text" width="100%" />
+    ))}
+
+    <Skeleton variant="text" width="85%" />
+    <Skeleton variant="text" width="95%" />
+  </div>
+);
 
 export default function PublicPrivacyPolicy() {
   const [privacyPolicy, setPrivacyPolicy] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  //    const token = localStorage.getItem("authToken");
-
-  //   const authConfig = {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   };
 
   useEffect(() => {
     const fetchPrivacyPolicy = async () => {
@@ -55,14 +89,14 @@ export default function PublicPrivacyPolicy() {
               <FaRegFile size={18} />
             </div>
             <h1 className="text-2xl heading md:text-4xl mt-1 font-semibold text-white">
-              Politique de confidentialité 
+              Politique de confidentialité
             </h1>
           </div>
         </div>
 
         <div className="max-w-5xl mx-auto px-6 py-12">
           {loading ? (
-            <p className="text-gray-500">Loading privacy policy...</p>
+            <PublicPrivacyContentSkeleton />
           ) : (
             <div
               className="prose max-w-none leading-relaxed text-gray-700"

@@ -32,35 +32,35 @@ export default function CreateAccount() {
 
     // First Name
     if (!form.firstName.trim()) {
-      newErrors.firstName = "First name is required";
+      newErrors.firstName = "Prénom est requis";
     } else if (form.firstName.trim().length < 3) {
       newErrors.firstName = "First name must be at least 3 characters";
     }
 
     // Last Name
     if (!form.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+      newErrors.lastName = "Nom de famille est requis";
     } else if (form.lastName.trim().length < 3) {
       newErrors.lastName = "Last name must be at least 3 characters";
     }
 
     // Phone
     if (!form.phone.trim()) {
-      newErrors.phone = "Phone number is required";
+      newErrors.phone = "Numéro de téléphone est requis";
     } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ""))) {
       newErrors.phone = "Enter a valid phone number";
     }
 
     // Email
     if (!form.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = "Email est requis";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = "Enter a valid email address";
     }
 
     // Password
     if (!form.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Mot de passe est requis";
     } else if (form.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])/.test(form.password)) {

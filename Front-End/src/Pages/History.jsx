@@ -4,12 +4,51 @@ import { useNavigate } from "react-router-dom";
 import { MdOutlineFileDownload } from "react-icons/md";
 import { FiFileText, FiTrash2, FiClock, FiCalendar } from "react-icons/fi";
 import { toast } from "react-toastify";
+import { Skeleton } from "@mui/material";
+
+const HistorySkeleton = () => (
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-xl bg-white p-2 sm:p-5 shadow-sm">
+    {/* Left */}
+    <div className="flex items-start gap-4">
+      <Skeleton
+        variant="rectangular"
+        width={48}
+        height={48}
+        sx={{ borderRadius: 2 }}
+      />
+
+      <div className="space-y-2">
+        <Skeleton variant="text" width={220} height={24} />
+        <Skeleton variant="text" width={300} />
+        <Skeleton variant="text" width={180} />
+      </div>
+    </div>
+
+    {/* Right Actions */}
+    <div className="flex gap-3">
+      <Skeleton variant="circular" width={32} height={32} />
+      <Skeleton
+        variant="rectangular"
+        width={110}
+        height={36}
+        sx={{ borderRadius: 1 }}
+      />
+      <Skeleton
+        variant="rectangular"
+        width={90}
+        height={36}
+        sx={{ borderRadius: 1 }}
+      />
+    </div>
+  </div>
+);
 
 export default function History() {
   const [simulations, setSimulations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [deletingId, setDeletingId] = useState(null);
 
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,77 +66,124 @@ export default function History() {
   };
 
   // ---------- FETCH ----------
- const fetchSimulations = async () => {
-  try {
-    setLoading(true);
-    setError("");
+  const fetchSimulations = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    const res = await axios.get(
-      "https://api.emibocquillon.fr/api/project/getall",
-      authConfig
-    );
+      const res = await axios.get(
+        "https://api.emibocquillon.fr/api/project/getall",
+        authConfig,
+      );
 
-    const projects = res.data.projects || res.data;
+      const projects = res.data.projects || res.data;
 
-    const mapped = projects.map((project) => ({
-      id: project._id,
-      title: project.name,
-      date: new Date(project.createdAt).toLocaleString(),
+      const mapped = projects.map((project) => ({
+        id: project._id,
+        title: project.name,
+        date: new Date(project.createdAt).toLocaleString(),
 
-      // SAFELY read type from API (Draft / Purchase)
-      status: project?.type === "purchase" ? "purchase" : "draft",
+        // SAFELY read type from API (Draft / Purchase)
+        status: project?.type === "purchase" ? "purchase" : "draft",
 
-      tva: project?.expenses?.reduce((sum, e) => {
-        const vat = ((e.priceExclTax || 0) * (e.vatRate || 0)) / 100;
-        return sum + vat;
-      }, 0),
+        tva: project?.expenses?.reduce((sum, e) => {
+          const vat = ((e.priceExclTax || 0) * (e.vatRate || 0)) / 100;
+          return sum + vat;
+        }, 0),
 
-      margin: project?.lots?.reduce((sum, lot) => {
-        return sum + (lot.resalePrice || 0);
-      }, 0),
-    }));
+        margin: project?.lots?.reduce((sum, lot) => {
+          return sum + (lot.resalePrice || 0);
+        }, 0),
+      }));
 
-    setSimulations(mapped);
-  } catch (err) {
-    console.error(err);
+      setSimulations(mapped);
+    } catch (err) {
+      console.error(err);
 
-    const status = err?.response?.status;
-    const message =
-      err?.response?.data?.message || "Session expired. Please log in again.";
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || "Session expired. Please log in again.";
 
-    setError(message);
-    toast.error(message, {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+      setError(message);
+      toast.error(message, {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
 
-    // Redirect to login on auth failure
-    if (status === 401 || status === 403) {
-      setTimeout(() => {
-        navigate("/login", { replace: true });
-      }, 3000);
+      // Redirect to login on auth failure
+      if (status === 401 || status === 403) {
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 3000);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const confirmDelete = (id) => {
+    toast(
+      ({ closeToast }) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium text-gray-800">
+            Êtes-vous sûr de vouloir supprimer ce rapport ?
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={closeToast}
+              className="px-3 py-1 text-sm rounded bg-gray-200 hover:bg-gray-300"
+            >
+              Annuler
+            </button>
+
+            <button
+              onClick={() => {
+                closeToast();
+                handleDelete(id);
+              }}
+              className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+            >
+              Confirmer
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "bottom-right",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      },
+    );
+  };
 
   // ---------- DELETE ----------
   const handleDelete = async (id) => {
     try {
+      setDeletingId(id);
+
       await axios.post(
         `https://api.emibocquillon.fr/api/project/soft-delete/${id}`,
-        {}, // 👈 body MUST exist
-        authConfig // 👈 headers go here
+        {},
+        authConfig,
       );
 
       setSimulations((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Simulation deleted");
+
+      toast.success("Rapport supprimé avec succès", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     } catch (err) {
       console.error(err);
 
-      toast.error(err?.response?.data?.message || "Delete failed");
+      toast.error(err?.response?.data?.message || "Delete failed", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -114,14 +200,14 @@ export default function History() {
     try {
       setDownloadingId(id);
 
-      toast.info("Generating report…");
+      toast.info("Génération de rapports…");
 
       const res = await axios.get(
         `https://api.emibocquillon.fr/api/project/generate-report/${id}`,
         {
           responseType: "blob",
           ...authConfig,
-        }
+        },
       );
 
       const blob = new Blob([res.data], { type: "application/pdf" });
@@ -141,10 +227,10 @@ export default function History() {
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success("Report downloaded successfully");
+      toast.success("Rapport téléchargé avec succès.");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to download report");
+      toast.error("Le téléchargement du rapport a échoué.");
     } finally {
       setDownloadingId(null);
     }
@@ -171,7 +257,7 @@ export default function History() {
   };
 
   const statusLabels = {
-    draft: "Draft",
+    draft: "Brouillon",
     purchase: "Terminé ",
   };
 
@@ -185,7 +271,7 @@ export default function History() {
           </div>
           <div>
             <h1 className="text-2xl md:text-4xl font-semibold text-white">
-              Historique 
+              Historique
             </h1>
             <p className="text-sm md:text-md text-white/70">
               Retrouvez toutes vos simulations enregistrées
@@ -195,17 +281,22 @@ export default function History() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-5">
-        {loading && <p>Loading...</p>}
+        {/* {loading && <p>Loading...</p>} */}
+        {loading &&
+          Array.from({ length: itemsPerPage }).map((_, i) => (
+            <HistorySkeleton key={i} />
+          ))}
+
         {error && <p className="text-red-500">{error}</p>}
 
         {!loading && simulations.length === 0 && (
-          <p className="text-gray-500">No simulations found</p>
+          <p className="text-gray-500 text-center text-2xl mt-32 ">No simulations found</p>
         )}
 
         {currentItems.map((item) => (
           <div
             key={item.id}
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-xl bg-white p-2 sm:p-5 shadow-sm"
+            className="transition-opacity duration-300 opacity-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-xl bg-white p-2 sm:p-5 shadow-sm"
           >
             {/* Left */}
             <div className="flex items-start gap-4">
@@ -298,22 +389,24 @@ export default function History() {
                 onClick={() => navigate(`/edit-report/${item.id}`)}
                 className="rounded-lg bg-[#063F34] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-white hover:bg-[#052F28] transition"
               >
-                {item.status === "draft" ? "Edit" : "Copier "}
+                {item.status === "draft" ? "éditer" : "Copier "}
               </button>
-
-              {/* <button
-                onClick={() => navigate(`/edit-report/${item.id}`)}
-                className="rounded-lg bg-[#063F34] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-white hover:bg-[#052F28] transition"
-              >
-                Edit
-              </button> */}
 
               {/* DELETE */}
               <button
-                onClick={() => handleDelete(item.id)}
-                className="text-red-500 hover:text-red-600 transition"
+                onClick={() => confirmDelete(item.id)}
+                disabled={deletingId === item.id}
+                className={`text-red-500 transition ${
+                  deletingId === item.id
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:text-red-600"
+                }`}
               >
-                <FiTrash2 className="text-sm md:text-lg" />
+                {deletingId === item.id ? (
+                  <span className="text-xs">Suppression…</span>
+                ) : (
+                  <FiTrash2 className="text-sm md:text-lg" />
+                )}
               </button>
             </div>
           </div>
@@ -331,7 +424,7 @@ export default function History() {
                   : "bg-[#063F34] text-white"
               }`}
             >
-              Précédent 
+              Précédent
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (

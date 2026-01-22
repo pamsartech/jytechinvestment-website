@@ -4,6 +4,41 @@ import { loadStripe } from "@stripe/stripe-js";
 import { FaCheck, FaTimes, FaEuroSign } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@mui/material";
+
+const PlanSkeleton = () => (
+  <div className="rounded-2xl border p-6 flex flex-col bg-white shadow-md">
+    {/* Title */}
+    <Skeleton variant="text" width={120} height={28} />
+
+    {/* Description */}
+    <Skeleton variant="text" width="80%" />
+    <Skeleton variant="text" width="60%" />
+
+    {/* Price */}
+    <div className="mt-6">
+      <Skeleton variant="text" width={140} height={36} />
+      <Skeleton variant="text" width={100} />
+    </div>
+
+    {/* CTA */}
+    <Skeleton
+      variant="rectangular"
+      height={40}
+      sx={{ borderRadius: 1, marginTop: 3 }}
+    />
+
+    {/* Features */}
+    <div className="mt-6 space-y-2">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Skeleton variant="circular" width={16} height={16} />
+          <Skeleton variant="text" width="70%" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default function Subscription() {
   const [billing, setBilling] = useState("monthly");
@@ -46,43 +81,40 @@ export default function Subscription() {
   };
 
   const fetchPlans = async () => {
-  try {
-    setPlansLoading(true);
+    try {
+      setPlansLoading(true);
 
-    const res = await axios.get(
-      "https://api.emibocquillon.fr/api/admin/get-all",
-      authConfig
-    );
+      const res = await axios.get(
+        "https://api.emibocquillon.fr/api/admin/get-all",
+        authConfig,
+      );
 
-    const activePlans = res.data.filter((p) => p.isActive);
-    setPlans(activePlans);
-  } catch (err) {
-    console.error(err);
+      const activePlans = res.data.filter((p) => p.isActive);
+      setPlans(activePlans);
+    } catch (err) {
+      console.error(err);
 
-    const status = err?.response?.status;
-    const message =
-      err?.response?.data?.message ||
-      "Session expired. Please log in again.";
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || "Session expired. Please log in again.";
 
-    toast.error(message, {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+      toast.error(message, {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
 
-    // Redirect on auth failure
-    if (status === 401 || status === 403) {
-      setTimeout(() => {
-        navigate("/login", { replace: true });
-      }, 3000);
+      // Redirect on auth failure
+      if (status === 401 || status === 403) {
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 3000);
+      }
+    } finally {
+      setPlansLoading(false);
     }
-  } finally {
-    setPlansLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
-   
     fetchPlans();
   }, []);
 
@@ -92,51 +124,49 @@ export default function Subscription() {
   };
 
   // stripe api
- const handlePlusCheckout = async () => {
-  try {
-    setLoading(true);
+  const handlePlusCheckout = async () => {
+    try {
+      setLoading(true);
 
-    const payload = {
-      name: "Plus",
-      durationMonths: billing === "yearly" ? 12 : 1,
-    };
+      const payload = {
+        name: "Plus",
+        durationMonths: billing === "yearly" ? 12 : 1,
+      };
 
-    const response = await axios.post(
-      "https://api.emibocquillon.fr/api/stripe/checkout-payment",
-      payload,
-      authConfig
-    );
+      const response = await axios.post(
+        "https://api.emibocquillon.fr/api/stripe/checkout-payment",
+        payload,
+        authConfig,
+      );
 
-    if (response.data?.url) {
-      toast.success("Redirecting to secure checkout...");
-      window.location.href = response.data.url;
-    } else {
-      toast.error("Checkout URL not received from server");
+      if (response.data?.url) {
+        toast.success("Redirecting to secure checkout...");
+        window.location.href = response.data.url;
+      } else {
+        toast.error("Checkout URL not received from server");
+      }
+    } catch (err) {
+      console.error(err);
+
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || "Session expired. Please log in again.";
+
+      toast.error(message, {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+
+      // Redirect on auth failure
+      if (status === 401 || status === 403) {
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 3000);
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error(err);
-
-    const status = err?.response?.status;
-    const message =
-      err?.response?.data?.message ||
-      "Session expired. Please log in again.";
-
-    toast.error(message, {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
-
-    // Redirect on auth failure
-    if (status === 401 || status === 403) {
-      setTimeout(() => {
-        navigate("/login", { replace: true });
-      }, 3000);
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //  const handlePlusCheckout = async () => {
   //   try {
@@ -187,7 +217,9 @@ export default function Subscription() {
             des créateurs exceptionnels
           </span>
         </h1>
-        <p className="text-gray-800 mt-4">Choisissez l’offre adaptée à vos besoins</p>
+        <p className="text-gray-800 mt-4">
+          Choisissez l’offre adaptée à vos besoins
+        </p>
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mt-8">
@@ -196,7 +228,7 @@ export default function Subscription() {
               billing === "monthly" ? "font-semibold" : "text-gray-400"
             }`}
           >
-            Paiement mensuel 
+            Paiement mensuel
           </span>
           <button
             onClick={() =>
@@ -215,8 +247,7 @@ export default function Subscription() {
               billing === "yearly" ? "font-semibold" : "text-gray-400"
             }`}
           >
-            Paiement annuel 
-
+            Paiement annuel
           </span>
           <span className="text-green-600 text-sm ml-2">Économisez 25 %</span>
         </div>
@@ -225,9 +256,13 @@ export default function Subscription() {
       {/* Pricing Cards */}
       <div className="max-w-3xl mx-auto px-4 pb-20">
         {plansLoading ? (
-          <p className="text-center text-gray-500">Loading plans...</p>
-        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <PlanSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="transition-opacity duration-300 opacity-100 grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* ================= FREE PLAN CARD ================= */}
             {freePlan && (
               <div className="rounded-2xl border p-6 flex flex-col bg-white shadow-md">
@@ -297,7 +332,8 @@ export default function Subscription() {
                             €{priceObj.actualPrice}
                           </span>
                           <span className="text-green-400">
-                             Vous économisez €{priceObj.actualPrice - priceObj.price}
+                            Vous économisez €
+                            {priceObj.actualPrice - priceObj.price}
                           </span>
                         </div>
                       )}

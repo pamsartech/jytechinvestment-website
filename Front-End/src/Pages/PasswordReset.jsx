@@ -3,6 +3,7 @@ import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { BsArrowLeft } from "react-icons/bs";
 import PublicNavbar from "../Components/PublicNavbar";
 import PublicFooter from "../Components/PublicFooter";
 
@@ -81,7 +82,7 @@ export default function PasswordReset() {
         { email }
       );
 
-      toast.success("OTP has been sent to your email");
+      toast.success("Un code OTP a été envoyé à votre adresse e-mail.");
       setStep("reset");
     } catch (err) {
       const message =
@@ -113,7 +114,7 @@ export default function PasswordReset() {
         }
       );
 
-      toast.success("Password reset successful");
+      toast.success("Réinitialisation du mot de passe réussie");
       navigate("/login");
     } catch (err) {
       const message = err.response?.data?.message || "Invalid OTP or password";
@@ -129,6 +130,12 @@ export default function PasswordReset() {
       <PublicNavbar />
 
       <div className="bg-[#063c35] py-14 md:py-20 text-center text-white">
+         <button
+            onClick={() => navigate("/login")}
+            className="text-white  border-white px-3 py-2 flex justify-start  md:ml-16 rounded-xl"
+          >
+            <BsArrowLeft size={20} />
+          </button>
         <div className="flex items-center justify-center gap-3 text-xl font-semibold">
           <span className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <FaUser />

@@ -26,6 +26,7 @@ import { LuFileText } from "react-icons/lu";
 import { MdOutlineFileDownload } from "react-icons/md";
 import { FaLongArrowAltLeft } from "react-icons/fa";
 import { BsArrowLeft } from "react-icons/bs";
+import { Skeleton } from "@mui/material";
 
 /* -------------------- DATA -------------------- */
 
@@ -97,6 +98,65 @@ const formatPercent = (v, decimals = 0) => {
 
   return `${formatted}%`;
 };
+
+
+const MetricCardSkeleton = () => (
+  <div className="flex flex-col justify-between rounded-[18px] border border-gray-100 bg-white px-4 py-4 md:px-6 md:py-10 shadow-sm/10">
+    <Skeleton
+      variant="rectangular"
+      width={40}
+      height={40}
+      sx={{ borderRadius: 2, marginBottom: 2 }}
+    />
+
+    <Skeleton variant="text" width={140} />
+    <Skeleton variant="text" width={110} height={28} />
+  </div>
+);
+
+const HeaderSkeleton = () => (
+  <div className="bg-[#063F34] px-6 py-10 md:py-20">
+    <div className="w-full justify-center mx-auto px-4 md:px-44 flex gap-4">
+      <Skeleton
+        variant="circular"
+        width={48}
+        height={48}
+        sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+      />
+
+      <div className="flex flex-col gap-2">
+        <Skeleton
+          variant="text"
+          width={260}
+          height={36}
+          sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+        />
+        <Skeleton
+          variant="text"
+          width={180}
+          sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+        />
+      </div>
+    </div>
+  </div>
+);
+
+
+const ChartSkeleton = () => (
+  <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
+    <Skeleton variant="text" width={220} height={28} />
+
+    <div className="mt-4 flex justify-center">
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height={280}
+        sx={{ borderRadius: 2 }}
+      />
+    </div>
+  </div>
+);
+
 
 export default function Simulation() {
   const { projectId } = useParams();
@@ -190,13 +250,13 @@ export default function Simulation() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success("Report downloaded successfully");
+      toast.success("Rapport téléchargé avec succès.");
     } catch (err) {
       console.error("Download failed:", err);
 
       toast.error(
         err?.response?.data?.message ||
-          "Failed to download report. Please try again.",
+          "Le téléchargement du rapport a échoué. Veuillez réessayer..",
       );
     } finally {
       setDownloading(false);
@@ -257,7 +317,57 @@ export default function Simulation() {
     value: Math.abs(item.value),
   }));
 
-  if (loading) return <div className="p-10 text-center">Loading...</div>;
+  // if (loading) return <div className="p-10 text-center">Loading...</div>;
+  if (loading)
+  return (
+    <div className="min-h-screen bg-[#f5f7f9]">
+      <HeaderSkeleton />
+
+      <main className="px-4 md:px-6 pt-10 pb-16">
+        {/* Project Name + Button */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 px-4 md:px-0 md:mx-14">
+          <Skeleton variant="rectangular" width={300} height={52} />
+          <Skeleton variant="rectangular" width={220} height={48} />
+        </div>
+
+        {/* Metric Cards */}
+        <div className="md:mx-16 mt-10 md:mt-20">
+          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-10">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <MetricCardSkeleton key={i} />
+            ))}
+          </section>
+        </div>
+
+        {/* Financing Cards */}
+        <div className="md:mx-16">
+          <Skeleton variant="text" width={200} height={32} />
+          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mt-4">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <MetricCardSkeleton key={i} />
+            ))}
+          </section>
+        </div>
+
+        {/* Synthesis Cards */}
+        <div className="md:mx-16 mt-10 md:mt-20">
+          <Skeleton variant="text" width={180} height={32} />
+          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mt-4">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <MetricCardSkeleton key={i} />
+            ))}
+          </section>
+        </div>
+
+        {/* Charts */}
+        <div className="w-full px-2 sm:px-4 md:px-6 py-6 md:py-10 mt-12 md:mt-20 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      </main>
+    </div>
+  );
+
   if (error)
     return <div className="p-10 text-center text-red-500">{error}</div>;
 
@@ -288,7 +398,7 @@ export default function Simulation() {
         </div>
       </div>
 
-      <main className="px-4 md:px-6 pt-10 pb-16">
+      <main className="transition-opacity duration-300 opacity-100 px-4 md:px-6 pt-10 pb-16">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 px-4 md:px-0 md:mx-14">
           {/* Project Name */}
           <label className="flex w-full flex-col md:max-w-md">

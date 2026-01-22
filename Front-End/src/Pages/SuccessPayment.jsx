@@ -1,5 +1,6 @@
 import React from "react";
 import { FaCheckCircle } from "react-icons/fa";
+import PublicFooter from "../Components/PublicFooter"
 
 export default function SuccessPayment() {
   return (
@@ -28,7 +29,7 @@ export default function SuccessPayment() {
         </p>
 
         {/* Plan card */}
-        <div className="mt-10 border border-gray-400 rounded-2xl shadow-sm p-8 max-w-xl mx-auto">
+        {/* <div className="mt-10 border border-gray-400 rounded-2xl shadow-sm p-8 max-w-xl mx-auto">
           <h3 className="text-xl font-semibold mb-2">
             Plus Plan
           </h3>
@@ -48,19 +49,21 @@ export default function SuccessPayment() {
             <li>✔ Graphical analysis</li>
             <li>✔ Advanced VAT optimization</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Buttons */}
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="px-6 py-3 rounded-xl bg-[#07332C] text-white font-medium hover:opacity-90 transition">
+          {/* <button className="px-6 py-3 rounded-xl bg-[#07332C] text-white font-medium hover:opacity-90 transition">
             Go to Dashboard
-          </button>
+          </button> */}
 
           {/* <button className="px-6 py-3 rounded-xl border border-gray-300 text-gray-800 font-medium hover:bg-gray-50 transition">
             Manage Subscription
           </button> */}
         </div>
       </div>
+
+      <PublicFooter />
     </div>
   );
 }

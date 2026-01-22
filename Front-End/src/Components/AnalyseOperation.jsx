@@ -317,30 +317,37 @@ export default function AnalyseOperation() {
   const validateForm = () => {
     /* ========= BASIC PROJECT INFO ========= */
     if (!projectName.trim()) {
-      toast.info("Project name is required");
+      toast.info("Le nom du projet est obligatoire.");
       return false;
     }
 
     if (!projectAddress.trim()) {
-      toast.info("Project address is required");
+      toast.info("L'adresse du projet est obligatoire.");
       return false;
     }
 
     /* ========= PURCHASE ========= */
     if (!purchase.faiPrice) {
-      toast.info("FAI price is required");
+      toast.info("Le prix FAI est requis.");
+      return false;
+    }
+    
+
+     if (!purchase.agencyFees) {
+      toast.info("Des frais d'agence sont requis.");
       return false;
     }
 
+
     /* ========= ACQUISITION ========= */
     if (!acquisition.acquisitionPercentage) {
-      toast.info("Acquisition percentage is required");
+      toast.info("Le pourcentage d'acquisition est requis.");
       return false;
     }
 
     /* ========= LOTS ========= */
     if (!lots.length) {
-      toast.info("At least one lot is required");
+      toast.info("Au moins un lot est requis.");
       return false;
     }
 
@@ -348,27 +355,27 @@ export default function AnalyseOperation() {
       const lot = lots[i];
 
       if (!lot.name.trim()) {
-        toast.info(`Lot ${i + 1}: name is required`);
+        toast.info(`Lot ${i + 1}: nom est obligatoire.`);
         return false;
       }
 
       if (!lot.resale) {
-        toast.info(`Lot ${i + 1}: resale price is required`);
+        toast.info(`Lot ${i + 1}: prix de revente est obligatoire.`);
         return false;
       }
 
       if (!lot.area) {
-        toast.info(`Lot ${i + 1}: area is required`);
+        toast.info(`Lot ${i + 1}: surface est requise.`);
         return false;
       }
 
       if (!lot.vat) {
-        toast.info(`Lot ${i + 1}: vat is required`);
+        toast.info(`Lot ${i + 1}: TVA est obligatoire.`);
         return false;
       }
 
       if (!lot.balance) {
-        toast.info(`Lot ${i + 1}: balance is required`);
+        toast.info(`Lot ${i + 1}: Équilibre est requis`);
         return false;
       }
 
@@ -383,7 +390,7 @@ export default function AnalyseOperation() {
 
       if (Math.abs(totalBalance - 100) > EPSILON) {
         toast.info(
-          `Lots balance must total 100%. Current total is ${totalBalance}%`,
+          `Les lots Équilibre doivent totaliser 100 %. Le total actuel est ${totalBalance}%`,
         );
         return false;
       }
@@ -394,17 +401,17 @@ export default function AnalyseOperation() {
       const e = expenses[i];
 
       if (!e.label.trim()) {
-        toast.info(`Expense ${i + 1}: label is required`);
+        toast.info(`Dépenses ${i + 1}: Intitulé est requis`);
         return false;
       }
 
       if (!e.price) {
-        toast.info(`Expense ${i + 1}: price is required`);
+        toast.info(`Dépenses ${i + 1}: 	prix HT  est requis`);
         return false;
       }
 
       if (e.vatRate === "") {
-        toast.info(`Expense ${i + 1}: VAT rate is required`);
+        toast.info(`Dépenses ${i + 1}: 	taux de TVA est requis`);
         return false;
       }
     }
@@ -412,37 +419,37 @@ export default function AnalyseOperation() {
     /* ========= FINANCING ========= */
 
     if (!financing.applicationFee) {
-      toast.info("Application Fees is required");
+      toast.info("Frais de dossier est requis");
       return false;
     }
 
     if (!financing.downPaymentRate) {
-      toast.info("Down payment rate is required");
+      toast.info("Taux d’apport  est requis");
       return false;
     }
 
     if (!financing.loanInterestRate) {
-      toast.info("Loan interest rate is required");
+      toast.info("Taux d’intérêt est requis");
       return false;
     }
 
     if (!financing.loanDuration) {
-      toast.info("Loan duration is required");
+      toast.info("Durée du prêt est requis");
       return false;
     }
 
     if (!financing.commissionRate) {
-      toast.info("Commission rate is required");
+      toast.info("Taux de commission est requis");
       return false;
     }
 
     if (!financing.commissionDuration) {
-      toast.info("Commission duration is required");
+      toast.info("Durée de commission est requis");
       return false;
     }
 
     if (!financing.mortgageRate) {
-      toast.info("Mortgage rate is required");
+      toast.info("Taux de montage est requis");
       return false;
     }
 
@@ -511,7 +518,7 @@ export default function AnalyseOperation() {
         authConfig,
       );
 
-      toast.success("Operation analysis submitted successfully", {
+      toast.success("Analyse opérationnelle soumise avec succès", {
         toastId: "submit-success",
       });
       console.log("API SUCCESS:", res.data);
@@ -536,7 +543,7 @@ export default function AnalyseOperation() {
   const draftValidate = () => {
     /* ========= BASIC PROJECT INFO ========= */
     if (!projectName.trim()) {
-      toast.info("Project name is required");
+      toast.info("Le nom du projet est obligatoire");
       return false;
     }
 
@@ -545,7 +552,7 @@ export default function AnalyseOperation() {
       const e = expenses[i];
 
       if (!e.label.trim()) {
-        toast.info(`Expense ${i + 1}: label is required`);
+        toast.info(`Dépenses ${i + 1}: Intitulé est requis`);
         return false;
       }
     }
@@ -617,7 +624,7 @@ export default function AnalyseOperation() {
         authConfig,
       );
 
-      toast.success("Draft saved successfully", {
+      toast.success("Brouillon enregistré avec succès", {
         toastId: "draft-success",
       });
 
@@ -667,7 +674,7 @@ export default function AnalyseOperation() {
       commitmentFees: "",
       mortgageFees: "",
     });
-    toast.success("Form discarded successfully");
+    toast.success("Le formulaire a été supprimé avec succès.");
   };
 
   /* ===========================
@@ -810,7 +817,7 @@ export default function AnalyseOperation() {
             <button
               type="button"
               onClick={addLot}
-              className="flex items-center gap-2 bg-[#0f3d2e] text-white px-4 py-2 rounded-xl text-md font-medium"
+              className="flex items-center gap-2 bg-[#0f3d2e] text-white px-2 md:px-4 py-2 rounded-xl text-xs md:text-md font-medium"
             >
               <FaPlus size={10} /> Ajouter un lot 
             </button>
@@ -982,7 +989,7 @@ export default function AnalyseOperation() {
                   },
                 ])
               }
-              className="flex items-center gap-2 bg-[#0f3d2e] text-white px-4 py-2 rounded-xl text-sm md:text-md font-medium"
+              className="flex items-center gap-2 bg-[#0f3d2e] text-white px-2 md:px-4 py-2 rounded-xl text-xs md:text-md font-medium"
             >
               <FaPlus size={10} /> Ajouter une dépense 
             </button>
@@ -1340,7 +1347,7 @@ export default function AnalyseOperation() {
                   // trim to one decimal place if needed
                   if (value.includes(".")) {
                     const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 1);
+                    value = intPart + "." + decPart.slice(0, 2);
                   }
 
                   const num = Number(value);
@@ -1478,63 +1485,24 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
   );
 }
 
-// function Cell({ value, onChange, placeholder, numeric = false, min, max }) {
-//   const handleChange = (e) => {
 
-//     let val = e.target.value;
-
-//     if (val === "") {
-//       onChange("");
-//       return;
-//     }
-
-//     if (numeric) {
-//       val = val.replace(",", ".");
-
-//       // same permissive decimal pattern
-//       const decimalPattern = /^(\d+(\.\d*)?|\.\d*)$/;
-//       if (!decimalPattern.test(val)) return;
-
-//       if (!isNaN(Number(val))) {
-//         const num = Number(val);
-
-//         if (min !== undefined && num < min) return;
-//         if (max !== undefined && num > max) return;
-//       }
-
-//       onChange(val);
-//       return;
-//     }
-
-//     onChange(val);
-//   };
-
-//   return (
-//     <input
-//       value={value}
-//       placeholder={placeholder}
-//       inputMode={numeric ? "decimal" : "text"}
-//       onChange={handleChange}
-//       className="bg-gray-100 rounded-lg px-3 py-3 w-full text-sm outline-none"
-//     />
-//   );
-// }
 function Cell({ value, onChange, numeric, ...props }) {
   function formatUSNumber(value) {
     if (value === null || value === undefined || value === "") return "";
 
-    const num = Number(value.toString().replace(/,/g, ""));
+    const num = Number(value.toString().replace(/[,\s]/g, ""));
     if (isNaN(num)) return "";
 
-    return num.toLocaleString("en-US");
+    // Format with spaces as thousand separators
+    return new Intl.NumberFormat("fr-FR").format(num);
   }
 
   const handleChange = (e) => {
     let val = e.target.value;
 
     if (numeric) {
-      // remove commas
-      val = val.replace(/,/g, "");
+      // remove spaces and commas
+      val = val.replace(/[,\s]/g, "");
 
       // digits only
       val = val.replace(/\D/g, "");
@@ -1555,6 +1523,7 @@ function Cell({ value, onChange, numeric, ...props }) {
     />
   );
 }
+
 
 function TotalBar({ label, value }) {
   return (

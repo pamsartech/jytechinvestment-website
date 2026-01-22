@@ -15,6 +15,7 @@ export default function HeroSection() {
         <p className="mt-6 text-base leading-relaxed text-white/80 sm:text-lg">
           Analysez précisément la rentabilité de vos opérations de marchand de
           biens. Calculez vos marges, optimisez la TVA et prenez les meilleures
+          décisions.
         </p>
 
         {/* calculation Button */}
