@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+
 
 const normalizeUserRole = (apiRole) => {
   if (!apiRole) return "user";
@@ -35,6 +37,9 @@ export default function Profile() {
   // const [profileImage, setProfileImage] = useState(
   //   "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?q=80&w=200&auto=format&fit=crop",
   // );
+
+  const navigate = useNavigate();
+
 
   const token = localStorage.getItem("authToken");
 
@@ -172,7 +177,7 @@ export default function Profile() {
 
         toast.success(
           formattedDate
-            ? `${message} (Effective on ${formattedDate})`
+            ? `${message} (effectif à partir du ${formattedDate})`
             : message,
         );
 
@@ -196,77 +201,93 @@ export default function Profile() {
     }
   };
 
-  const fetchProfile = async () => {
-    try {
-      const res = await axios.get(
-        "https://api.emibocquillon.fr/api/auth/DashBoard",
-        authConfig,
+ const fetchProfile = async () => {
+  try {
+    const res = await axios.get(
+      "https://api.emibocquillon.fr/api/auth/DashBoard",
+      authConfig
+    );
+
+    if (res.data.success) {
+      const user = res.data.user;
+
+      setUserRole(normalizeUserRole(user.role));
+
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.FirstName || "",
+        lastName: user.LastName || "",
+        email: user.Email || "",
+        phone: user.PhoneNumber || "",
+      }));
+
+      const subscriptionStatusApi =
+        res.data.payment?.subscriptionStatus || "Inactive";
+
+      const isSubscriptionActive =
+        typeof subscriptionStatusApi === "string" &&
+        subscriptionStatusApi.toLowerCase() === "active";
+
+      setSubscriptionStatus({
+        isActive: isSubscriptionActive,
+        label: isSubscriptionActive
+          ? "Subscription Active"
+          : "Subscription Deactivated",
+      });
+
+      setIsCancelled(!isSubscriptionActive);
+
+      const start = new Date(user.startDate);
+      const end = new Date(user.endDate);
+      const today = new Date();
+
+      const daysRemaining = Math.max(
+        Math.ceil((end - today) / (1000 * 60 * 60 * 24)),
+        0
       );
 
-      if (res.data.success) {
-        const user = res.data.user;
-
-        setUserRole(normalizeUserRole(user.role));
-
-        setFormData((prev) => ({
-          ...prev,
-          firstName: user.FirstName || "",
-          lastName: user.LastName || "",
-          email: user.Email || "",
-          phone: user.PhoneNumber || "",
-        }));
-
-        // ✅ SUBSCRIPTION STATUS LOGIC (BASED ON SUBSCRIPTION STATUS)
-        const subscriptionStatusApi =
-          res.data.payment?.subscriptionStatus || "Inactive";
-
-        const isSubscriptionActive =
-          typeof subscriptionStatusApi === "string" &&
-          subscriptionStatusApi.toLowerCase() === "active";
-
-        setSubscriptionStatus({
-          isActive: isSubscriptionActive,
-          label: isSubscriptionActive
-            ? "Subscription Active"
-            : "Subscription Deactivated",
-        });
-
-        // Keep button state in sync
-        setIsCancelled(!isSubscriptionActive);
-
-        const start = new Date(user.startDate);
-        const end = new Date(user.endDate);
-        const today = new Date();
-
-        const daysRemaining = Math.max(
-          Math.ceil((end - today) / (1000 * 60 * 60 * 24)),
-          0,
-        );
-
-        setSubscription({
-          planName: user.plan_name || "-",
-          startDate: start.toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
-          endDate: end.toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
-          daysRemaining,
-          totalReports: user.total_report_generated || 0,
-        });
-      }
-    } catch (error) {
-      console.error("Profile prefill failed", error);
-
-      toast.error(
-        error.response?.data?.message || "Unable to fetch profile information",
-      );
+      setSubscription({
+        planName: user.plan_name || "-",
+        startDate: start.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        endDate: end.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        daysRemaining,
+        totalReports: user.total_report_generated || 0,
+      });
     }
-  };
+  } catch (error) {
+    console.error("Profile prefill failed", error);
+
+    const status = error?.response?.status;
+
+    // 🔐 Token invalid or expired → force login
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("authToken");
+      toast.error("Session expirée. Veuillez vous reconnecter.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    toast.error(
+      error.response?.data?.message || "Unable to fetch profile information"
+    );
+  }
+};
+
+
+// useEffect(() => {
+//   if (!token) {
+//     navigate("/login", { replace: true });
+//   }
+// }, [token, navigate]);
+
 
   /* ---------- Prefill API ---------- */
   useEffect(() => {
@@ -361,7 +382,7 @@ export default function Profile() {
   `}
               >
                 {continueLoading
-                  ? "Processing..."
+                  ? "Traitement..."
                   : isInvitedUser
                     ? "Invited users cannot subscribe"
                     : subscriptionStatus.isActive
@@ -382,7 +403,7 @@ export default function Profile() {
           }`}
               >
                 {cancelLoading
-                  ? "Cancelling..."
+                  ? "Annulation..."
                   : isInvitedUser
                     ? "Action non autorisée"
                     : isCancelled

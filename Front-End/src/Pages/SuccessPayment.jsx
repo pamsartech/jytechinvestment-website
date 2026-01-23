@@ -1,8 +1,12 @@
 import React from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import PublicFooter from "../Components/PublicFooter"
+import { useNavigate } from "react-router-dom";
 
 export default function SuccessPayment() {
+
+   const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-white">
       {/* Top Bar */}
@@ -21,11 +25,11 @@ export default function SuccessPayment() {
         </div>
 
         <h2 className="text-3xl font-semibold">
-          Payment Successful
+          Paiement réussi
         </h2>
 
         <p className="text-gray-600 mt-2">
-          Thank you for your purchase. Your subscription is now active.
+          Merci pour votre achat. Votre abonnement est maintenant actif.
         </p>
 
         {/* Plan card */}
@@ -53,9 +57,10 @@ export default function SuccessPayment() {
 
         {/* Buttons */}
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          {/* <button className="px-6 py-3 rounded-xl bg-[#07332C] text-white font-medium hover:opacity-90 transition">
-            Go to Dashboard
-          </button> */}
+          <button onClick={() => navigate("/")}
+           className="px-6 py-3 rounded-xl bg-[#07332C] text-white font-medium hover:opacity-90 transition">
+            Aller au tableau de bord
+          </button>
 
           {/* <button className="px-6 py-3 rounded-xl border border-gray-300 text-gray-800 font-medium hover:bg-gray-50 transition">
             Manage Subscription

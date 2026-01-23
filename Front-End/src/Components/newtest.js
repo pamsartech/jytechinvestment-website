@@ -1271,3 +1271,62 @@ export default function Simulation() {
   );
 }
 
+
+
+
+
+// input test
+function Input({ value, onChange, placeholder, numeric = false, min, max }) {
+  const formatFR = (val) => {
+    if (val === "" || val === null || val === undefined) return "";
+
+    const num = Number(val.toString().replace(/\s/g, "").replace(",", "."));
+    if (isNaN(num)) return val;
+
+    return new Intl.NumberFormat("fr-FR").format(num);
+  };
+
+  const handleChange = (e) => {
+    let val = e.target.value;
+
+    if (val === "") {
+      onChange("");
+      return;
+    }
+
+    if (numeric) {
+      // Remove spaces (thousand separators)
+      val = val.replace(/\s/g, "");
+
+      // Convert French decimal → JS decimal
+      val = val.replace(",", ".");
+
+      // Allow: 12 | 12. | 12.3 | .5
+      const decimalPattern = /^(\d+(\.\d*)?|\.\d*)$/;
+      if (!decimalPattern.test(val)) return;
+
+      if (!isNaN(Number(val))) {
+        const num = Number(val);
+        if (min !== undefined && num < min) return;
+        if (max !== undefined && num > max) return;
+      }
+
+      onChange(val);
+      return;
+    }
+
+    onChange(val);
+  };
+
+  const displayValue = numeric ? formatFR(value) : value;
+
+  return (
+    <input
+      className="w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
+      value={displayValue}
+      onChange={handleChange}
+      placeholder={placeholder}
+      inputMode={numeric ? "decimal" : "text"}
+    />
+  );
+}

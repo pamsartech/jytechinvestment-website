@@ -1,7 +1,13 @@
 import React from "react";
 import { FaTimesCircle } from "react-icons/fa";
+import PublicFooter from "../Components/PublicFooter"
+import { useNavigate } from "react-router-dom";
 
 export default function FailedPayment() {
+  
+
+     const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-white">
       {/* Top Bar */}
@@ -20,16 +26,16 @@ export default function FailedPayment() {
         </div>
 
         <h2 className="text-3xl font-semibold">
-          Payment Failed
+          Paiement échoué
         </h2>
 
         <p className="text-gray-600 mt-2">
-          Unfortunately your payment could not be processed.
-          Please verify your card details or try again with a different payment method.
+         Malheureusement, votre paiement n'a pas pu être traité.
+Veuillez vérifier les informations de votre carte ou réessayer avec un autre mode de paiement.
         </p>
 
         {/* Failure details card */}
-        <div className="mt-10 border border-gray-400 rounded-2xl shadow-sm p-8 max-w-xl mx-auto">
+        {/* <div className="mt-10 border border-gray-400 rounded-2xl shadow-sm p-8 max-w-xl mx-auto">
           <h3 className="text-xl font-semibold mb-3">
             Plus Plan – €15 / Month
           </h3>
@@ -44,22 +50,24 @@ export default function FailedPayment() {
             <li>• Incorrect card information</li>
             <li>• Bank blocked international online payments</li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Action buttons */}
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <button
+          {/* <button
             onClick={() => (window.location.href = "/pricing")}
             className="px-6 py-3 rounded-xl bg-[#07332C] text-white font-medium hover:opacity-90 transition"
           >
             Try Payment Again
-          </button>
+          </button> */}
 
-          <button className="px-6 py-3 rounded-xl border border-gray-300 text-gray-800 font-medium hover:bg-gray-50 transition">
-            Contact Support
+          <button onClick={() => navigate("/")} className="px-6 py-3 rounded-xl border border-gray-300 text-gray-800 font-medium hover:bg-gray-50 transition">
+          Aller au tableau de bord
           </button>
         </div>
       </div>
+
+      <PublicFooter />
     </div>
   );
 }

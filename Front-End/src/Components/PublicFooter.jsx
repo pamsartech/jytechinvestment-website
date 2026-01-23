@@ -15,10 +15,10 @@ export default function PublicFooter() {
         {/* Top Grid */}
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand / Description */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <div className="flex items-center gap-2">
              
-               <img className="flex h-14 w-14 items-center justify-center rounded-full " src="/logo1.jpg" alt="">
+               <img className="flex h-16 w-16 items-center justify-center rounded-full " src="/logo1.jpg" alt="">
             
           </img>
             </div>
@@ -46,7 +46,7 @@ export default function PublicFooter() {
           </div>
 
           {/* About */}
-          <div>
+          {/* <div>
             <h4 className="mb-4 text-sm font-semibold">À propos </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li>Notre mission </li>
@@ -54,22 +54,22 @@ export default function PublicFooter() {
               <li>Carrières </li>
               <li>Presse </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Product */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold">Produit </h4>
+            <h4 className="mb-4 text-lg md:text-2xl heading font-semibold">Produit </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li>Simulateur</li>
               <li>Fonctionnalités </li>
               <li className=" cursor-pointer" onClick={() => navigate("/public-subscription")}>Plan d'abonnement</li>
-              <li>API</li>
+             
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold">Légal</h4>
+            <h4 className="mb-4 text-lg md:text-2xl heading font-semibold">Légal</h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li>Legal notice</li>
               <li onClick={() => navigate("/public-terms-conditions")} className=" cursor-pointer">Conditions générales</li>

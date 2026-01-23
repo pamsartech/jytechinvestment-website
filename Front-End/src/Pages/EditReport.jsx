@@ -21,6 +21,8 @@ export default function EditReport() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [projectType, setProjectType] = useState(null);
+
   const token = localStorage.getItem("authToken");
 
   const authConfig = {
@@ -30,13 +32,46 @@ export default function EditReport() {
   };
 
   useEffect(() => {
+    if (!token) {
+      toast.error("Votre session a expiré. Veuillez vous reconnecter.");
+      localStorage.removeItem("authToken");
+      navigate("/login", { replace: true });
+    }
+  }, [token, navigate]);
+
+  const handleAuthError = (error) => {
+    const status = error?.response?.status;
+
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("authToken");
+      toast.error("Session expirée. Veuillez vous reconnecter.");
+      navigate("/login", { replace: true });
+      return true;
+    }
+
+    return false;
+  };
+
+  const formatFRNumber = (val) => {
+    if (val === "" || val === null || val === undefined) return "0";
+
+    const num = Number(val);
+    if (isNaN(num)) return "0";
+
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
+
+  useEffect(() => {
     if (!id) return;
 
     const fetchProject = async () => {
       try {
         const res = await axios.get(
           `https://api.emibocquillon.fr/api/project/getproject/${id}`,
-          authConfig
+          authConfig,
         );
 
         const project = res.data.project;
@@ -46,6 +81,7 @@ export default function EditReport() {
       =========================== */
         setProjectName(project.name || "");
         setProjectAddress(project.address || "");
+        setProjectType(project.type); // "draft", "submitted", etc.
 
         /* ===========================
          PURCHASE
@@ -76,7 +112,7 @@ export default function EditReport() {
               area: lot.area?.toString() || "",
               vat: lot.vatType || "Exonéré de TVA",
               balance: lot.balance?.toString() || "",
-            }))
+            })),
           );
         }
 
@@ -90,7 +126,7 @@ export default function EditReport() {
               label: e.label || "",
               price: e.priceExclTax?.toString() || "",
               vatRate: e.vatRate?.toString() || "",
-            }))
+            })),
           );
         }
 
@@ -116,6 +152,9 @@ export default function EditReport() {
         }
       } catch (err) {
         console.error("FETCH PROJECT ERROR:", err);
+
+        if (handleAuthError(err)) return;
+
         toast.error("Unable to load project data");
       }
     };
@@ -204,7 +243,7 @@ export default function EditReport() {
 
   const updateLot = (id, field, value) => {
     setLots((prev) =>
-      prev.map((lot) => (lot.id === id ? { ...lot, [field]: value } : lot))
+      prev.map((lot) => (lot.id === id ? { ...lot, [field]: value } : lot)),
     );
   };
 
@@ -245,7 +284,7 @@ export default function EditReport() {
 
   const updateExpense = (id, field, value) => {
     setExpenses((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
+      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
     );
   };
 
@@ -260,22 +299,21 @@ export default function EditReport() {
   //     return sum + price + vat;
   //   }, 0);
 
-  //   return Number(total.toFixed(0)); 
+  //   return Number(total.toFixed(0));
   // }, [expenses]);
   const totalExpenseCost = useMemo(() => {
-  const total = expenses.reduce((sum, e) => {
-    // Force whole numbers only
-    const price = Math.floor(Number(e.price || 0));
-    const vatRate = Math.floor(Number(e.vatRate || 0));
+    const total = expenses.reduce((sum, e) => {
+      // Force whole numbers only
+      const price = Math.floor(Number(e.price || 0));
+      const vatRate = Math.floor(Number(e.vatRate || 0));
 
-    const vat = (price * vatRate) / 100;
+      const vat = (price * vatRate) / 100;
 
-    return sum + price + vat;
-  }, 0);
+      return sum + price + vat;
+    }, 0);
 
-  return Math.floor(total);
-}, [expenses]);
-
+    return Math.floor(total);
+  }, [expenses]);
 
   /* ===========================
      5. FINANCING
@@ -304,7 +342,7 @@ export default function EditReport() {
   const borrowedAmount = useMemo(() => {
     return Math.max(
       totalProjectCost - Number(financing.downPaymentAuto || 0),
-      0
+      0,
     );
   }, [totalProjectCost, financing.downPaymentAuto]);
 
@@ -405,7 +443,7 @@ export default function EditReport() {
   ]);
 
   // validation
-   const validateForm = () => {
+  const validateForm = () => {
     /* ========= BASIC PROJECT INFO ========= */
     if (!projectName.trim()) {
       toast.info("Le nom du projet est obligatoire.");
@@ -422,13 +460,11 @@ export default function EditReport() {
       toast.info("Le prix FAI est requis.");
       return false;
     }
-    
 
-     if (!purchase.agencyFees) {
+    if (!purchase.agencyFees) {
       toast.info("Des frais d'agence sont requis.");
       return false;
     }
-
 
     /* ========= ACQUISITION ========= */
     if (!acquisition.acquisitionPercentage) {
@@ -606,7 +642,7 @@ export default function EditReport() {
       const res = await axios.post(
         "https://api.emibocquillon.fr/api/project/save",
         payload,
-        authConfig
+        authConfig,
       );
 
       toast.success("Analyse opérationnelle soumise avec succès", {
@@ -617,6 +653,8 @@ export default function EditReport() {
       navigate("/history");
     } catch (err) {
       console.error("API ERROR:", err);
+
+      if (handleAuthError(err)) return;
 
       const message =
         err.response?.data?.message ||
@@ -631,7 +669,7 @@ export default function EditReport() {
   };
 
   // save as draft validation
-   const draftValidate = () => {
+  const draftValidate = () => {
     /* ========= BASIC PROJECT INFO ========= */
     if (!projectName.trim()) {
       toast.info("Le nom du projet est obligatoire");
@@ -712,7 +750,7 @@ export default function EditReport() {
       const res = await axios.post(
         "https://api.emibocquillon.fr/api/project/save-draft",
         payload,
-        authConfig
+        authConfig,
       );
 
       toast.success("Brouillon enregistré avec succès", {
@@ -725,6 +763,8 @@ export default function EditReport() {
       navigate("/history");
     } catch (err) {
       console.error("DRAFT API ERROR:", err);
+
+      if (handleAuthError(err)) return;
 
       const message =
         err.response?.data?.message ||
@@ -781,13 +821,26 @@ export default function EditReport() {
             Modifier le rapport
           </h1>
           <p className="text-xl text-gray-500 mt-3 max-w-xl mx-auto">
-            Remplissez les détails de votre projet immobilier pour recevoir une analyse détaillée de sa rentabilité.
-          </p> 
-        <p className="bg-gray-100 text-gray-500 px-2 py-1 rounded-xl mt-5 ">
-           Note : If you change the project name in a draft report while editing it will create another report instead  of updating your draft
+            Remplissez les détails de votre projet immobilier pour recevoir une
+            analyse détaillée de sa rentabilité.
           </p>
+
+          {/* Note */}
+          {/* Note - only show for draft */}
+          {projectType === "draft" && (
+            <p className="bg-gray-100 text-gray-500 px-2 py-1 rounded-xl mt-5">
+              Remarque : Si vous modifiez le nom du projet dans un rapport
+              brouillon lors de sa modification, cela créera un nouveau rapport
+              au lieu de mettre à jour votre brouillon.
+            </p>
+          )}
+
+          {/* <p className="bg-gray-100 text-gray-500 px-2 py-1 rounded-xl mt-5 ">
+            Note : If you change the project name in a draft report while
+            editing it will create another report instead of updating your draft
+          </p> */}
         </div>
- 
+
         {/* name */}
         <Section className="">
           <label>
@@ -856,7 +909,7 @@ export default function EditReport() {
         {/* ACQUISITION COST */}
         <Section>
           <SectionTitle icon={<FaReceipt size={16} />}>
-            Frais d’acquisition 
+            Frais d’acquisition
           </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
@@ -878,7 +931,7 @@ export default function EditReport() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Frais de notaire (€) 
+                Frais de notaire (€)
               </span>
               <Input
                 numeric
@@ -978,7 +1031,7 @@ export default function EditReport() {
                         }
                         className="w-full bg-gray-100 border border-gray-400 rounded-lg px-3 py-2 text-xs"
                       >
-                        <option value="Exonéré de TVA">Exonéré de TVA </option> 
+                        <option value="Exonéré de TVA">Exonéré de TVA </option>
                         <option value="TVA Intégrale">TVA Intégrale </option>
                         <option value="TVA sur Marge">TVA sur Marge </option>
                       </select>
@@ -1037,7 +1090,11 @@ export default function EditReport() {
             </table>
           </div>
 
-          <TotalBar label="Total revente" value={`${totalResale} €`} />
+          {/* <TotalBar label="Total revente" value={`${totalResale} €`} /> */}
+          <TotalBar
+            label="Total revente"
+            value={`${formatFRNumber(totalResale)} €`}
+          />
         </Section>
 
         {/* EXPENSES */}
@@ -1112,8 +1169,8 @@ export default function EditReport() {
 
                       <td className="px-4 py-4">
                         <Cell
-                          numeric
                           placeholder="20"
+                          list="vat-rate-options"
                           value={e.vatRate}
                           onChange={(v) => {
                             if (v === "") {
@@ -1121,24 +1178,25 @@ export default function EditReport() {
                               return;
                             }
 
-                            // normalize comma → dot
                             let value = v.replace(",", ".");
 
-                            // limit to one decimal place
+                            // allow digits + one dot
+                            if (!/^\d*\.?\d*$/.test(value)) return;
+
+                            // limit to 2 decimals
                             if (value.includes(".")) {
-                              const [intPart, decPart] = value.split(".");
-                              value = intPart + "." + decPart.slice(0, 2);
+                              const [i, d] = value.split(".");
+                              value = i + "." + d.slice(0, 2);
                             }
 
                             const num = Number(value);
 
-                            // allow intermediate state like "3."
+                            // allow "3."
                             if (isNaN(num)) {
                               updateExpense(e.id, "vatRate", value);
                               return;
                             }
 
-                            // enforce 0–100 range
                             if (num < 0 || num > 100) return;
 
                             updateExpense(e.id, "vatRate", value);
@@ -1173,11 +1231,14 @@ export default function EditReport() {
           {/* TOTAL */}
           <div className="flex items-center justify-between rounded-xl mt-5 bg-gray-100 px-6 py-4">
             <span className="text-sm font-medium text-gray-600">
-              Coût total des dépenses 
+              Coût total des dépenses
             </span>
 
-            <span className="text-xl font-semibold text-gray-900">
+            {/* <span className="text-xl font-semibold text-gray-900">
               {totalExpenseCost} €
+            </span> */}
+            <span className="text-xl font-semibold text-gray-900">
+              {formatFRNumber(totalExpenseCost)} €
             </span>
           </div>
         </Section>
@@ -1185,7 +1246,7 @@ export default function EditReport() {
         {/* FINANCING */}
         <Section>
           <SectionTitle icon={<AiOutlineBank size={18} />}>
-            Financement 
+            Financement
           </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
@@ -1207,7 +1268,7 @@ export default function EditReport() {
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1218,24 +1279,25 @@ export default function EditReport() {
                     return;
                   }
 
-                  // normalize comma -> dot
                   let value = v.replace(",", ".");
 
-                  // limit to one decimal place
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // allow transient states like "3."
+                  // allow "3."
                   if (isNaN(num)) {
                     updateFinancing("downPaymentRate", value);
                     return;
                   }
 
-                  // enforce 0–100
                   if (num < 0 || num > 100) return;
 
                   updateFinancing("downPaymentRate", value);
@@ -1261,7 +1323,7 @@ export default function EditReport() {
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1272,18 +1334,21 @@ export default function EditReport() {
                     return;
                   }
 
-                  // normalize comma to dot
+                  // normalize comma → dot
                   let value = v.replace(",", ".");
 
-                  // limit to one decimal place
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // allow temporary states like "3."
+                  // allow "3."
                   if (isNaN(num)) {
                     updateFinancing("loanInterestRate", value);
                     return;
@@ -1327,7 +1392,7 @@ export default function EditReport() {
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1338,24 +1403,27 @@ export default function EditReport() {
                     return;
                   }
 
-                  // normalize comma to dot
+                  // normalize comma → dot
                   let value = v.replace(",", ".");
 
-                  // limit to one decimal place (typing-friendly)
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // allow intermediate states like "3."
+                  // allow "3."
                   if (isNaN(num)) {
                     updateFinancing("commissionRate", value);
                     return;
                   }
 
-                  // range 0–100
+                  // enforce 0–100
                   if (num < 0 || num > 100) return;
 
                   updateFinancing("commissionRate", value);
@@ -1393,7 +1461,7 @@ export default function EditReport() {
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1404,24 +1472,27 @@ export default function EditReport() {
                     return;
                   }
 
-                  // allow typing "." and numbers
+                  // normalize comma → dot
                   let value = v.replace(",", ".");
 
-                  // trim to one decimal place if needed
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // still allow unfinished input like "3."
+                  // allow unfinished input like "3."
                   if (isNaN(num)) {
                     updateFinancing("mortgageRate", value);
                     return;
                   }
 
-                  // enforce range
+                  // enforce range 0–100
                   if (num < 0 || num > 100) return;
 
                   updateFinancing("mortgageRate", value);
@@ -1442,7 +1513,11 @@ export default function EditReport() {
             </label>
           </div>
 
-          <TotalBar label="Coût total du financement " value={`${totalFinancing} €`} />
+          {/* <TotalBar label="Coût total du financement " value={`${totalFinancing} €`} /> */}
+          <TotalBar
+            label="Coût total du financement"
+            value={`${formatFRNumber(totalFinancing)} €`}
+          />
         </Section>
 
         {/* buttons */}
@@ -1453,7 +1528,7 @@ export default function EditReport() {
             disabled={submitting}
             className="w-full md:w-auto px-4 py-2 rounded-2xl hover:bg-gray-200 border-2 border-[#00332B] text-[#00332B] font-semibold text-lg"
           >
-            <FaXmark className="inline-block mr-2" /> Annuler 
+            <FaXmark className="inline-block mr-2" /> Annuler
           </button>
 
           <button
@@ -1506,6 +1581,15 @@ function SectionTitle({ icon, children }) {
 }
 
 function Input({ value, onChange, placeholder, numeric = false, min, max }) {
+  const formatFR = (val) => {
+    if (val === "" || val === null || val === undefined) return "";
+
+    const num = Number(val.toString().replace(/\s/g, "").replace(",", "."));
+    if (isNaN(num)) return val;
+
+    return new Intl.NumberFormat("fr-FR").format(num);
+  };
+
   const handleChange = (e) => {
     let val = e.target.value;
 
@@ -1515,6 +1599,9 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
     }
 
     if (numeric) {
+      // remove thousand separators
+      val = val.replace(/\s/g, "");
+
       // allow comma as decimal separator
       val = val.replace(",", ".");
 
@@ -1525,7 +1612,6 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
       // only validate min/max when value is a real number
       if (!isNaN(Number(val))) {
         const num = Number(val);
-
         if (min !== undefined && num < min) return;
         if (max !== undefined && num > max) return;
       }
@@ -1537,10 +1623,12 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
     onChange(val);
   };
 
+  const displayValue = numeric ? formatFR(value) : value;
+
   return (
     <input
       className="w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
-      value={value}
+      value={displayValue}
       onChange={handleChange}
       placeholder={placeholder}
       inputMode={numeric ? "decimal" : "text"}
@@ -1585,7 +1673,6 @@ function Cell({ value, onChange, numeric, ...props }) {
     />
   );
 }
-
 
 function TotalBar({ label, value }) {
   return (

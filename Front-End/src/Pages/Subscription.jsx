@@ -218,7 +218,7 @@ export default function Subscription() {
           </span>
         </h1>
         <p className="text-gray-800 mt-4">
-          Choisissez l’offre adaptée à vos besoins
+          Une vision claire de vos investissements sans limites
         </p>
 
         {/* Toggle */}

@@ -65,6 +65,32 @@ export default function History() {
     },
   };
 
+
+  const formatDateFR = (dateString) => {
+  if (!dateString) return "—";
+
+  const date = new Date(dateString);
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+};
+
+
+const formatEuroFR = (value) => {
+  if (value === null || value === undefined || isNaN(value)) return "—";
+
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+
   // ---------- FETCH ----------
   const fetchSimulations = async () => {
     try {
@@ -81,7 +107,9 @@ export default function History() {
       const mapped = projects.map((project) => ({
         id: project._id,
         title: project.name,
-        date: new Date(project.createdAt).toLocaleString(),
+        // date: new Date(project.createdAt).toLocaleString(),
+        date: formatDateFR(project.createdAt),
+
 
         // SAFELY read type from API (Draft / Purchase)
         status: project?.type === "purchase" ? "purchase" : "draft",
@@ -93,7 +121,7 @@ export default function History() {
 
         margin: project?.lots?.reduce((sum, lot) => {
           return sum + (lot.resalePrice || 0);
-        }, 0),
+        }, 0) ,
       }));
 
       setSimulations(mapped);
@@ -102,7 +130,7 @@ export default function History() {
 
       const status = err?.response?.status;
       const message =
-        err?.response?.data?.message || "Session expired. Please log in again.";
+        err?.response?.data?.message || "Votre session a expiré. Veuillez vous reconnecter..";
 
       setError(message);
       toast.error(message, {
@@ -290,7 +318,7 @@ export default function History() {
         {error && <p className="text-red-500">{error}</p>}
 
         {!loading && simulations.length === 0 && (
-          <p className="text-gray-500 text-center text-2xl mt-32 ">No simulations found</p>
+          <p className="text-gray-500 text-center text-2xl mt-32 ">Aucun rapport de simulation n'a été trouvé.</p>
         )}
 
         {currentItems.map((item) => (
@@ -332,8 +360,8 @@ export default function History() {
                 </p>
 
                 <p className="text-xs sm:text-sm text-gray-500">
-                  TVA: <span className="text-black mr-2">{item.tva}€</span>
-                  Margin: <span className="text-black">{item.margin}€</span>
+                  TVA: <span className="text-black mr-2">{formatEuroFR(item.tva)}</span>
+                  Margin: <span className="text-black">{formatEuroFR(item.margin)}</span>
                 </p>
               </div>
             </div>
@@ -389,7 +417,7 @@ export default function History() {
                 onClick={() => navigate(`/edit-report/${item.id}`)}
                 className="rounded-lg bg-[#063F34] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-white hover:bg-[#052F28] transition"
               >
-                {item.status === "draft" ? "éditer" : "Copier "}
+                {item.status === "draft" ? "Modifier" : "Copier "}
               </button>
 
               {/* DELETE */}

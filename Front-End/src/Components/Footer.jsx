@@ -10,14 +10,14 @@ export default function Footer() {
         {/* Top Grid */}
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand / Description */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <div className="flex items-center gap-2">
               {/* <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-[#053B33] font-bold">
                 I
               </div>
               <span className="text-lg font-semibold">ImmoRenta</span> */}
               <img
-                className="flex h-14 w-14 items-center justify-center rounded-full "
+                className="flex h-16 w-16 items-center justify-center rounded-full "
                 src="/logo1.jpg"
                 alt=""
               ></img>
@@ -46,7 +46,7 @@ export default function Footer() {
           </div>
 
           {/* About */}
-          <div>
+          {/* <div>
             <h4 className="mb-4 text-sm font-semibold">À propos </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li>Notre mission </li>
@@ -54,22 +54,26 @@ export default function Footer() {
               <li>Carrières </li>
               <li>Presse </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Product */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold">Produit </h4>
+            <h4 className="mb-4 text-lg md:text-2xl heading font-semibold">Produit </h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li>Simulateur</li>
-              <li>Fonctionnalités </li>
-              <li>Tarifs</li>
-              <li>API</li>
+
+              <li  onClick={() => navigate("/history")}
+                className="  cursor-pointer">Historique </li>
+
+              <li  onClick={() => navigate("/subscription")}
+                className=" cursor-pointer">Plan d'abonnement</li>
+             
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="mb-4 text-sm font-semibold">Légal</h4>
+            <h4 className="mb-4 text-lg md:text-2xl heading font-semibold">Légal</h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li>Legal notice</li>
               <li

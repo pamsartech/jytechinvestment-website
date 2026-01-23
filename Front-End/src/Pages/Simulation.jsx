@@ -40,10 +40,9 @@ const renderCustomLabel = ({
   midAngle,
   outerRadius,
   percent,
-  name,
   value,
 }) => {
-  if (value < 0.5) return null; // hide 0% visually
+  if (value < 0.5) return null; // hide very small slices
 
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 18;
@@ -60,10 +59,11 @@ const renderCustomLabel = ({
       fontSize={13}
       fontWeight={500}
     >
-      {name} {Math.round(percent * 100)}%
+      {Math.round(percent * 100)}%
     </text>
   );
 };
+
 
 /* shared card styles */
 const baseCard =
@@ -178,6 +178,28 @@ export default function Simulation() {
   };
 
   useEffect(() => {
+  if (!token) {
+    toast.error("Votre session a expiré. Veuillez vous reconnecter.");
+    localStorage.removeItem("authToken");
+    navigate("/login", { replace: true });
+  }
+}, [token, navigate]);
+
+
+const handleAuthError = (error) => {
+  const status = error?.response?.status;
+
+  if (status === 401 || status === 403) {
+    localStorage.removeItem("authToken");
+    toast.error("Session expirée. Veuillez vous reconnecter.");
+    navigate("/login", { replace: true });
+    return true;
+  }
+
+  return false;
+};
+
+  useEffect(() => {
     if (!projectId) return;
 
     const fetchSimulation = async () => {
@@ -195,9 +217,13 @@ export default function Simulation() {
         setProjectName(res.data.projectName || "");
         setCreatedAt(res.data.createdAt || "");
       } catch (err) {
-        console.error(err);
-        setError("Failed to load simulation data");
-      } finally {
+  console.error(err);
+
+  if (handleAuthError(err)) return;
+
+  setError("Failed to load simulation data");
+}
+ finally {
         setLoading(false);
       }
     };
@@ -252,13 +278,16 @@ export default function Simulation() {
 
       toast.success("Rapport téléchargé avec succès.");
     } catch (err) {
-      console.error("Download failed:", err);
+  console.error("Download failed:", err);
 
-      toast.error(
-        err?.response?.data?.message ||
-          "Le téléchargement du rapport a échoué. Veuillez réessayer..",
-      );
-    } finally {
+  if (handleAuthError(err)) return;
+
+  toast.error(
+    err?.response?.data?.message ||
+      "Le téléchargement du rapport a échoué. Veuillez réessayer.",
+  );
+}
+finally {
       setDownloading(false);
     }
   };
@@ -850,7 +879,7 @@ export default function Simulation() {
 
           <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             {/* -------------------- PIE / DONUT -------------------- */}
-            <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
+            <div className="rounded-2xl bg-white p-2 sm:p-6 shadow-sm">
               <h3 className="mb-3 sm:mb-6 text-base sm:text-lg font-semibold">
                 Répartition des coûts 
               </h3>
@@ -895,7 +924,7 @@ export default function Simulation() {
             </div>
 
             {/* -------------------- BAR CHART -------------------- */}
-            <div className="rounded-2xl bg-white p-3 sm:p-6 shadow-sm">
+            <div className="rounded-2xl bg-white p-2 sm:p-6 shadow-sm">
               <h3 className="mb-3 sm:mb-6 text-base sm:text-lg font-semibold">
                 Analyse de la TVA 
               </h3>

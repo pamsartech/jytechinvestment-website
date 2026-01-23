@@ -30,13 +30,13 @@ const cards = [
   //   subtitle: "Chat live with an advisor",
   //   buttonLabel: "Open WhatsApp",
   // },
-  {
-    id: 2,
-    icon: <FiCalendar className="w-7 h-7 text-emerald-900" />,
-    title: "Planifier un appel ",
-    subtitle: "Réserver un créneau avec un expert",
-    buttonLabel: "Réserver",
-  },
+  // {
+  //   id: 2,
+  //   icon: <FiCalendar className="w-7 h-7 text-emerald-900" />,
+  //   title: "Planifier un appel ",
+  //   subtitle: "Réserver un créneau avec un expert",
+  //   buttonLabel: "Réserver",
+  // },
 ];
 
 export default function PublicSupport() {
@@ -113,7 +113,7 @@ export default function PublicSupport() {
 
       {/* Cards */}
       <div className="mt-15 flex items-center justify-center   px-4">
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-1">
           {cards.map((card) => (
             <div
               key={card.id}
@@ -193,9 +193,9 @@ export default function PublicSupport() {
             </div>
           </div>
 
-          <button className="mt-6 px-8 py-2.5 rounded-full border border-white hover:bg-white hover:text-[#063c35] transition">
+          {/* <button className="mt-6 px-8 py-2.5 rounded-full border border-white hover:bg-white hover:text-[#063c35] transition">
             Contacter le support
-          </button>
+          </button> */}
         </div>
       </div>
 

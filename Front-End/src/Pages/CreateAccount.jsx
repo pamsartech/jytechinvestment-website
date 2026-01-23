@@ -34,38 +34,38 @@ export default function CreateAccount() {
     if (!form.firstName.trim()) {
       newErrors.firstName = "Prénom est requis";
     } else if (form.firstName.trim().length < 3) {
-      newErrors.firstName = "First name must be at least 3 characters";
+      newErrors.firstName = "Le prénom doit comporter au moins 3 caractères.";
     }
 
     // Last Name
     if (!form.lastName.trim()) {
       newErrors.lastName = "Nom de famille est requis";
     } else if (form.lastName.trim().length < 3) {
-      newErrors.lastName = "Last name must be at least 3 characters";
+      newErrors.lastName = "Le nom de famille doit comporter au moins 3 caractères.";
     }
 
     // Phone
     if (!form.phone.trim()) {
       newErrors.phone = "Numéro de téléphone est requis";
     } else if (!/^\+?[0-9]{10,15}$/.test(form.phone.replace(/\s/g, ""))) {
-      newErrors.phone = "Enter a valid phone number";
+      newErrors.phone = "Veuillez saisir un numéro de téléphone valide.";
     }
 
     // Email
     if (!form.email.trim()) {
       newErrors.email = "Email est requis";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Enter a valid email address";
+      newErrors.email = "Veuillez saisir une adresse e-mail valide.";
     }
 
     // Password
     if (!form.password) {
       newErrors.password = "Mot de passe est requis";
     } else if (form.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+      newErrors.password = "Le mot de passe doit comporter au moins 8 caractères.";
     } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])/.test(form.password)) {
       newErrors.password =
-        "Password must contain uppercase, lowercase and number";
+        "Le mot de passe doit contenir des majuscules, des minuscules et des chiffres.";
     }
 
     setErrors(newErrors);
@@ -101,13 +101,13 @@ export default function CreateAccount() {
       );
 
       // ✅ SUCCESS TOAST (API-driven)
-      toast.success(res.data?.message || "Account created successfully");
+      toast.success(res.data?.message || "Compte créé avec succès");
 
       navigate("/login");
     } catch (err) {
       const message =
         err.response?.data?.message ||
-        "Unable to create account. Please try again.";
+        "Impossible de créer le compte. Veuillez réessayer.";
 
       // ❌ ERROR TOAST
       toast.error(message);

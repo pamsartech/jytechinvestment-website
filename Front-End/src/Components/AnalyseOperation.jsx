@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -28,22 +28,44 @@ export default function AnalyseOperation() {
     },
   };
 
+  useEffect(() => {
+    if (!token) {
+      toast.error("Votre session a expiré. Veuillez vous reconnecter.");
+      localStorage.removeItem("authToken");
+      navigate("/login", { replace: true });
+    }
+  }, [token, navigate]);
+
+  const handleAuthError = (error) => {
+    const status = error?.response?.status;
+
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("authToken");
+      toast.error("Session expirée. Veuillez vous reconnecter.");
+      navigate("/login", { replace: true });
+      return true;
+    }
+
+    return false;
+  };
+
   // submit state
   const [submitting, setSubmitting] = useState(false);
   const [draftSaving, setDraftSaving] = useState(false);
   const [apiError, setApiError] = useState(null);
   const toNumber = (v) => (v === "" || v === null ? 0 : Number(v));
 
-  function formatIndianNumber(value) {
-    if (value === null || value === undefined || value === "") return "";
+  const formatFRNumber = (val) => {
+    if (val === "" || val === null || val === undefined) return "0";
 
-    value = value.toString().replace(/,/g, "");
+    const num = Number(val);
+    if (isNaN(num)) return "0";
 
-    const num = Number(value);
-    if (isNaN(num)) return "";
-
-    return num.toLocaleString("en-IN");
-  }
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
 
   // name
   const [projectName, setProjectName] = useState("");
@@ -161,16 +183,6 @@ export default function AnalyseOperation() {
   const removeExpense = (id) => {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
-
-  // const totalExpenseCost = useMemo(() => {
-  //   const total = expenses.reduce((sum, e) => {
-  //     const price = Number(e.price || 0);
-  //     const vat = (price * Number(e.vatRate || 0)) / 100;
-  //     return sum + price + vat;
-  //   }, 0);
-
-  //   return Number(total.toFixed(0));
-  // }, [expenses]);
 
   const totalExpenseCost = useMemo(() => {
     const total = expenses.reduce((sum, e) => {
@@ -331,13 +343,11 @@ export default function AnalyseOperation() {
       toast.info("Le prix FAI est requis.");
       return false;
     }
-    
 
-     if (!purchase.agencyFees) {
+    if (!purchase.agencyFees) {
       toast.info("Des frais d'agence sont requis.");
       return false;
     }
-
 
     /* ========= ACQUISITION ========= */
     if (!acquisition.acquisitionPercentage) {
@@ -527,6 +537,8 @@ export default function AnalyseOperation() {
     } catch (err) {
       console.error("API ERROR:", err);
 
+      if (handleAuthError(err)) return;
+
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
@@ -635,6 +647,8 @@ export default function AnalyseOperation() {
     } catch (err) {
       console.error("DRAFT API ERROR:", err);
 
+      if (handleAuthError(err)) return;
+
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
@@ -699,7 +713,7 @@ export default function AnalyseOperation() {
         <Section className="">
           <label>
             <span className="text-gray-800 text-lg font-semibold">
-              Nom du projet 
+              Nom du projet
             </span>
 
             <input
@@ -736,7 +750,7 @@ export default function AnalyseOperation() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Prix FAI (€) 
+                Prix FAI (€)
               </span>
               <Input
                 numeric
@@ -748,7 +762,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Frais d’agence (€) 
+                Frais d’agence (€)
               </span>
               <Input
                 numeric
@@ -763,13 +777,13 @@ export default function AnalyseOperation() {
         {/* ACQUISITION COST */}
         <Section>
           <SectionTitle icon={<FaReceipt size={16} />}>
-            Frais d’acquisition 
+            Frais d’acquisition
           </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Pourcentage d’acquisition (%) 
+                Pourcentage d’acquisition (%)
               </span>
               <Input
                 numeric
@@ -785,7 +799,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Frais de notaire (€) 
+                Frais de notaire (€)
               </span>
               <Input
                 numeric
@@ -797,7 +811,7 @@ export default function AnalyseOperation() {
 
             <label className=" md:col-span-2">
               <span className="text-gray-400 text-sm  font-semibold">
-                Coût total d’acquisition (€) 
+                Coût total d’acquisition (€)
               </span>
               <Input
                 numeric
@@ -819,7 +833,7 @@ export default function AnalyseOperation() {
               onClick={addLot}
               className="flex items-center gap-2 bg-[#0f3d2e] text-white px-2 md:px-4 py-2 rounded-xl text-xs md:text-md font-medium"
             >
-              <FaPlus size={10} /> Ajouter un lot 
+              <FaPlus size={10} /> Ajouter un lot
             </button>
           </div>
 
@@ -965,7 +979,11 @@ export default function AnalyseOperation() {
             </table>
           </div>
 
-          <TotalBar label="Total revente" value={`${totalResale} €`} />
+          {/* <TotalBar label="Total revente" value={`${totalResale} €`} /> */}
+          <TotalBar
+            label="Total revente"
+            value={`${formatFRNumber(totalResale)} €`}
+          />
         </Section>
 
         {/* EXPENSES */}
@@ -991,7 +1009,7 @@ export default function AnalyseOperation() {
               }
               className="flex items-center gap-2 bg-[#0f3d2e] text-white px-2 md:px-4 py-2 rounded-xl text-xs md:text-md font-medium"
             >
-              <FaPlus size={10} /> Ajouter une dépense 
+              <FaPlus size={10} /> Ajouter une dépense
             </button>
           </div>
 
@@ -1041,7 +1059,6 @@ export default function AnalyseOperation() {
                       <td className="px-4 py-4">
                         <>
                           <Cell
-                            numeric
                             placeholder="20"
                             list="vat-rate-options"
                             value={e.vatRate}
@@ -1051,24 +1068,25 @@ export default function AnalyseOperation() {
                                 return;
                               }
 
-                              // normalize comma → dot
                               let value = v.replace(",", ".");
 
-                              // limit to two decimal places
+                              // allow digits + one dot
+                              if (!/^\d*\.?\d*$/.test(value)) return;
+
+                              // limit to 2 decimals
                               if (value.includes(".")) {
-                                const [intPart, decPart] = value.split(".");
-                                value = intPart + "." + decPart.slice(0, 2);
+                                const [i, d] = value.split(".");
+                                value = i + "." + d.slice(0, 2);
                               }
 
                               const num = Number(value);
 
-                              // allow intermediate state like "3."
+                              // allow "3."
                               if (isNaN(num)) {
                                 updateExpense(e.id, "vatRate", value);
                                 return;
                               }
 
-                              // enforce 0–100 range
                               if (num < 0 || num > 100) return;
 
                               updateExpense(e.id, "vatRate", value);
@@ -1110,11 +1128,14 @@ export default function AnalyseOperation() {
           {/* TOTAL */}
           <div className="flex items-center justify-between rounded-xl mt-5 bg-gray-100 px-6 py-4">
             <span className="text-sm font-medium text-gray-600">
-              Coût total des dépenses 
+              Coût total des dépenses
             </span>
 
-            <span className="text-xl font-semibold text-gray-900">
+            {/* <span className="text-xl font-semibold text-gray-900">
               {totalExpenseCost} €
+            </span> */}
+            <span className="text-xl font-semibold text-gray-900">
+              {formatFRNumber(totalExpenseCost)} €
             </span>
           </div>
         </Section>
@@ -1122,13 +1143,13 @@ export default function AnalyseOperation() {
         {/* FINANCING */}
         <Section>
           <SectionTitle icon={<AiOutlineBank size={18} />}>
-            Financement 
+            Financement
           </SectionTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Frais de dossier (€) 
+                Frais de dossier (€)
               </span>
               <Input
                 numeric
@@ -1140,11 +1161,11 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Taux d’apport (%) 
+                Taux d’apport (%)
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1155,24 +1176,25 @@ export default function AnalyseOperation() {
                     return;
                   }
 
-                  // normalize comma -> dot
                   let value = v.replace(",", ".");
 
-                  // limit to one decimal place
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // allow transient states like "3."
+                  // allow "3."
                   if (isNaN(num)) {
                     updateFinancing("downPaymentRate", value);
                     return;
                   }
 
-                  // enforce 0–100
                   if (num < 0 || num > 100) return;
 
                   updateFinancing("downPaymentRate", value);
@@ -1182,7 +1204,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Apport personnel (€) 
+                Apport personnel (€)
               </span>
               <Input
                 numeric
@@ -1194,11 +1216,11 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Taux d’intérêt (%) 
+                Taux d’intérêt (%)
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1209,18 +1231,21 @@ export default function AnalyseOperation() {
                     return;
                   }
 
-                  // normalize comma to dot
+                  // normalize comma → dot
                   let value = v.replace(",", ".");
 
-                  // limit to one decimal place
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // allow temporary states like "3."
+                  // allow "3."
                   if (isNaN(num)) {
                     updateFinancing("loanInterestRate", value);
                     return;
@@ -1236,7 +1261,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Durée du prêt (mois) 
+                Durée du prêt (mois)
               </span>
               <Input
                 numeric
@@ -1248,7 +1273,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-               Intérêts d’emprunt (€) 
+                Intérêts d’emprunt (€)
               </span>
               <Input
                 numeric
@@ -1260,11 +1285,11 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Taux de commission (%) 
+                Taux de commission (%)
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1275,24 +1300,27 @@ export default function AnalyseOperation() {
                     return;
                   }
 
-                  // normalize comma to dot
+                  // normalize comma → dot
                   let value = v.replace(",", ".");
 
-                  // limit to one decimal place (typing-friendly)
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // allow intermediate states like "3."
+                  // allow "3."
                   if (isNaN(num)) {
                     updateFinancing("commissionRate", value);
                     return;
                   }
 
-                  // range 0–100
+                  // enforce 0–100
                   if (num < 0 || num > 100) return;
 
                   updateFinancing("commissionRate", value);
@@ -1314,7 +1342,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Frais de commission (€) 
+                Frais de commission (€)
               </span>
               <Input
                 numeric
@@ -1330,7 +1358,7 @@ export default function AnalyseOperation() {
               </span>
 
               <Input
-                numeric
+                inputMode="decimal"
                 min={0}
                 max={100}
                 placeholder="5"
@@ -1341,24 +1369,27 @@ export default function AnalyseOperation() {
                     return;
                   }
 
-                  // allow typing "." and numbers
+                  // normalize comma → dot
                   let value = v.replace(",", ".");
 
-                  // trim to one decimal place if needed
+                  // allow digits + one dot
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  // limit to 2 decimals
                   if (value.includes(".")) {
-                    const [intPart, decPart] = value.split(".");
-                    value = intPart + "." + decPart.slice(0, 2);
+                    const [i, d] = value.split(".");
+                    value = i + "." + d.slice(0, 2);
                   }
 
                   const num = Number(value);
 
-                  // still allow unfinished input like "3."
+                  // allow unfinished input like "3."
                   if (isNaN(num)) {
                     updateFinancing("mortgageRate", value);
                     return;
                   }
 
-                  // enforce range
+                  // enforce range 0–100
                   if (num < 0 || num > 100) return;
 
                   updateFinancing("mortgageRate", value);
@@ -1368,7 +1399,7 @@ export default function AnalyseOperation() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Frais de montage (€) 
+                Frais de montage (€)
               </span>
               <Input
                 numeric
@@ -1379,7 +1410,14 @@ export default function AnalyseOperation() {
             </label>
           </div>
 
-          <TotalBar label="Coût total du financement" value={`${totalFinancing} €`} />
+          {/* <TotalBar
+            label="Coût total du financement"
+            value={`${totalFinancing} €`}
+          /> */}
+          <TotalBar
+            label="Coût total du financement"
+            value={`${formatFRNumber(totalFinancing)} €`}
+          />
         </Section>
 
         {/* buttons */}
@@ -1443,6 +1481,15 @@ function SectionTitle({ icon, children }) {
 }
 
 function Input({ value, onChange, placeholder, numeric = false, min, max }) {
+  const formatFR = (val) => {
+    if (val === "" || val === null || val === undefined) return "";
+
+    const num = Number(val.toString().replace(/\s/g, "").replace(",", "."));
+    if (isNaN(num)) return val;
+
+    return new Intl.NumberFormat("fr-FR").format(num);
+  };
+
   const handleChange = (e) => {
     let val = e.target.value;
 
@@ -1452,6 +1499,9 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
     }
 
     if (numeric) {
+      // remove thousand separators
+      val = val.replace(/\s/g, "");
+
       // allow comma as decimal separator
       val = val.replace(",", ".");
 
@@ -1462,7 +1512,6 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
       // only validate min/max when value is a real number
       if (!isNaN(Number(val))) {
         const num = Number(val);
-
         if (min !== undefined && num < min) return;
         if (max !== undefined && num > max) return;
       }
@@ -1474,17 +1523,18 @@ function Input({ value, onChange, placeholder, numeric = false, min, max }) {
     onChange(val);
   };
 
+  const displayValue = numeric ? formatFR(value) : value;
+
   return (
     <input
       className="w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
-      value={value}
+      value={displayValue}
       onChange={handleChange}
       placeholder={placeholder}
       inputMode={numeric ? "decimal" : "text"}
     />
   );
 }
-
 
 function Cell({ value, onChange, numeric, ...props }) {
   function formatUSNumber(value) {
@@ -1523,7 +1573,6 @@ function Cell({ value, onChange, numeric, ...props }) {
     />
   );
 }
-
 
 function TotalBar({ label, value }) {
   return (
