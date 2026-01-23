@@ -32,7 +32,7 @@ export default function Footer() {
             <ul className="mt-6 space-y-3 text-sm text-white/70">
               <li className="flex items-center gap-3">
                 <FaEnvelope className="text-white/60" />
-                contact@immorenta.fr
+                contact@jytecmdb.net
               </li>
               {/* <li className="flex items-center gap-3">
                 <FaPhoneAlt className="text-white/60" />
@@ -60,7 +60,6 @@ export default function Footer() {
           <div>
             <h4 className="mb-4 text-lg md:text-2xl heading font-semibold">Produit </h4>
             <ul className="space-y-3 text-sm text-white/70">
-              <li>Simulateur</li>
 
               <li  onClick={() => navigate("/history")}
                 className="  cursor-pointer">Historique </li>
@@ -98,7 +97,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 text-sm text-white/60 sm:flex-row">
-          <p>© 2025 ImmoRenta. All rights reserved.</p>
+          <p>© 2025 ImmoRenta. Tous droits réservés.</p>
 
           <div className="flex items-center gap-4">
             <span>Instagram</span>

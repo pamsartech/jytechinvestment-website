@@ -212,13 +212,13 @@ export default function Subscription() {
       {/* Title */}
       <div className="max-w-6xl mx-auto px-4 py-14 text-center">
         <h1 className="text-2xl md:text-4xl md:w-1/2 mx-auto font-bold">
-          Des fonctionnalités puissantes pour{" "}
+          Une vision claire de vos {" "}
           <span className=" bg-linear-to-l from-[#34941F] to-[#066757] bg-clip-text text-transparent">
-            des créateurs exceptionnels
+           investissements sans limites
           </span>
         </h1>
         <p className="text-gray-800 mt-4">
-          Une vision claire de vos investissements sans limites
+          Choisissez l’offre adaptée à vos besoins
         </p>
 
         {/* Toggle */}

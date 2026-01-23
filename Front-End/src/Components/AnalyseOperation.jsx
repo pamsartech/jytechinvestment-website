@@ -754,7 +754,7 @@ export default function AnalyseOperation() {
               </span>
               <Input
                 numeric
-                placeholder="250,000"
+                placeholder="250 000"
                 value={purchase.faiPrice}
                 onChange={(v) => setPurchase({ ...purchase, faiPrice: v })}
               />
@@ -766,7 +766,7 @@ export default function AnalyseOperation() {
               </span>
               <Input
                 numeric
-                placeholder="10,000"
+                placeholder="10 000"
                 value={purchase.agencyFees}
                 onChange={(v) => setPurchase({ ...purchase, agencyFees: v })}
               />
@@ -876,7 +876,7 @@ export default function AnalyseOperation() {
                     <td className="px-4">
                       <Cell
                         numeric
-                        placeholder="250000"
+                        placeholder="250 000"
                         value={lot.resale}
                         onChange={(v) => updateLot(lot.id, "resale", v)}
                       />
@@ -1041,7 +1041,7 @@ export default function AnalyseOperation() {
                       <td className="px-1 pr-6 py-4">
                         <Cell
                           type="text"
-                          placeholder="Renovation"
+                          placeholder="Rénovation"
                           value={e.label}
                           onChange={(v) => updateExpense(e.id, "label", v)}
                         />
@@ -1050,7 +1050,7 @@ export default function AnalyseOperation() {
                       <td className="px-1 pr-6 py-4">
                         <Cell
                           numeric
-                          placeholder="250,000"
+                          placeholder="250 000"
                           value={e.price}
                           onChange={(v) => updateExpense(e.id, "price", v)}
                         />
@@ -1153,7 +1153,7 @@ export default function AnalyseOperation() {
               </span>
               <Input
                 numeric
-                placeholder="2000"
+                placeholder="2 000"
                 value={financing.applicationFee}
                 onChange={(v) => updateFinancing("applicationFee", v)}
               />

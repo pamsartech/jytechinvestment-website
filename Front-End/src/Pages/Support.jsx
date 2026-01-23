@@ -200,7 +200,7 @@ export default function SupportPage() {
 
           <div className="flex flex-col sm:flex-row gap-6 mt-6 text-md">
             <div className="flex items-center gap-2">
-              <FaEnvelope /> support@immoerenta.fr
+              <FaEnvelope /> contact@jytecmdb.net
             </div>
           </div>
 

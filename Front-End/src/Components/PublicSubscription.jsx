@@ -96,7 +96,7 @@ export default function PublicSubscription() {
 const handlePlusCheckout = () => {
   setLoading(true);
 
-  toast.info("Please login first", {
+  toast.info("Veuillez vous connecter d'abord.", {
     position: "bottom-right",
     autoClose: 2000,
   });
