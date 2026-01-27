@@ -38,10 +38,10 @@ export default function Footer() {
                 <FaPhoneAlt className="text-white/60" />
                 +33 10 00 00 00
               </li> */}
-              <li className="flex items-center gap-3">
+              {/* <li className="flex items-center gap-3">
                 <FaMapMarkerAlt className="text-white/60" />
                 Paris, France
-              </li>
+              </li> */}
             </ul>
           </div>
 

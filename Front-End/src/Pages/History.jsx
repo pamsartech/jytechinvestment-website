@@ -417,7 +417,7 @@ const formatEuroFR = (value) => {
                 onClick={() => navigate(`/edit-report/${item.id}`)}
                 className="rounded-lg bg-[#063F34] px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium text-white hover:bg-[#052F28] transition"
               >
-                {item.status === "draft" ? "Modifier" : "Copier "}
+                {item.status === "draft" ? "Modifier" : "Modifier "}
               </button>
 
               {/* DELETE */}

@@ -73,31 +73,55 @@ const iconBase =
   "w-10 h-10 flex items-center justify-center rounded-xl mb-4 text-sm";
 
 /* helpers */
+// const formatCurrency = (v, decimals = 2) => {
+//   if (v === undefined || v === null || isNaN(v)) return "—";
+
+//   const formatted = Number(v)
+//     .toLocaleString(undefined, {
+//       minimumFractionDigits: decimals,
+//       maximumFractionDigits: decimals,
+//     })
+//     .replace(/,/g, " "); 
+
+//   return `${formatted} €`;
+// };
+
 const formatCurrency = (v, decimals = 2) => {
   if (v === undefined || v === null || isNaN(v)) return "—";
 
-  const formatted = Number(v)
-    .toLocaleString(undefined, {
+  return (
+    Number(v).toLocaleString("fr-FR", {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    })
-    .replace(/,/g, " "); // replace commas with spaces
-
-  return `${formatted} €`;
+    }) + " €"
+  );
 };
+
+
+// const formatPercent = (v, decimals = 0) => {
+//   if (v === undefined || v === null || isNaN(v)) return "—";
+
+//   const formatted = Number(v)
+//     .toLocaleString(undefined, {
+//       minimumFractionDigits: 0,
+//       maximumFractionDigits: decimals,
+//     })
+//     .replace(/,/g, " "); 
+
+//   return `${formatted}%`;
+// };
 
 const formatPercent = (v, decimals = 0) => {
   if (v === undefined || v === null || isNaN(v)) return "—";
 
-  const formatted = Number(v)
-    .toLocaleString(undefined, {
+  return (
+    Number(v).toLocaleString("fr-FR", {
       minimumFractionDigits: 0,
       maximumFractionDigits: decimals,
-    })
-    .replace(/,/g, " "); // replace commas with spaces
-
-  return `${formatted}%`;
+    }) + " %"
+  );
 };
+
 
 
 const MetricCardSkeleton = () => (
@@ -464,7 +488,7 @@ finally {
         </div>
 
         <div className="md:mx-16 mt-10 md:mt-20">
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-10">
+          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 mb-10">
             {/* Total expenses */}
             <div className={baseCard}>
               <div>
@@ -481,7 +505,7 @@ finally {
             </div>
 
             {/* Total VAT */}
-            <div className={baseCard}>
+            {/* <div className={baseCard}>
               <div>
                 <div className={`${iconBase} bg-gray-100 text-gray-600`}>
                   <FaReceipt />
@@ -493,7 +517,7 @@ finally {
                   {formatCurrency(data.totalVAT)}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             {/* total resale */}
             <div className={baseCard}>
@@ -553,7 +577,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Apport personnel
+                  Apport
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.contribution)}
@@ -577,7 +601,7 @@ finally {
             </div>
 
             {/* loan amount */}
-            <div className={baseCard}>
+            {/* <div className={baseCard}>
               <div>
                 <div className={`${iconBase} bg-gray-100 text-gray-600`}>
                   <FaReceipt />
@@ -589,7 +613,7 @@ finally {
                   {formatCurrency(data.loanAmount)}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             {/* total interest */}
             <div className={baseCard}>
@@ -598,7 +622,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Intérêts totaux 
+                  Intérêt d’emprunt
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.totalInterest)}
@@ -613,7 +637,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Commission
+                  Frais de commission et virgule
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.commission)}
@@ -652,7 +676,7 @@ finally {
             </div>
 
             {/* total finance cost per month */}
-            <div className={baseCard}>
+            {/* <div className={baseCard}>
               <div>
                 <div className={`${iconBase} bg-gray-100 text-gray-600`}>
                   <FaReceipt />
@@ -665,7 +689,7 @@ finally {
                   {formatCurrency(data.totalfinacecostpermonth)}
                 </p>
               </div>
-            </div>
+            </div> */}
           </section>
         </div>
 
@@ -681,7 +705,7 @@ finally {
                   <FaChartLine />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Coût total 
+                   Coût total du projet 
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.totalCost)}
@@ -690,7 +714,7 @@ finally {
             </div>
 
             {/* total project cost */}
-            <div className={baseCard}>
+            {/* <div className={baseCard}>
               <div>
                 <div className={`${iconBase} bg-gray-100 text-gray-600`}>
                   <FaFileAlt />
@@ -702,7 +726,7 @@ finally {
                   {formatCurrency(data.totalProjectCost)}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             {/* Net Margin (active) */}
             <div className={`${baseCard} bg-[#e8f3ef] border-[#c9e1d8]`}>
@@ -741,7 +765,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Marge
+                  Marge et Virgule
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.margin)}

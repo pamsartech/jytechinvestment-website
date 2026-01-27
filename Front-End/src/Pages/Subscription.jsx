@@ -211,10 +211,10 @@ export default function Subscription() {
 
       {/* Title */}
       <div className="max-w-6xl mx-auto px-4 py-14 text-center">
-        <h1 className="text-2xl md:text-4xl md:w-1/2 mx-auto font-bold">
-          Une vision claire de vos {" "}
+         <h1 className="text-2xl md:text-4xl md:w-xl mx-auto font-bold">
+           L’abonnement des investisseurs qui   {" "}
           <span className=" bg-linear-to-l from-[#34941F] to-[#066757] bg-clip-text text-transparent">
-           investissements sans limites
+          veulent décider avec précision
           </span>
         </h1>
         <p className="text-gray-800 mt-4">
@@ -249,7 +249,7 @@ export default function Subscription() {
           >
             Paiement annuel
           </span>
-          <span className="text-green-600 text-sm ml-2">Économisez 25 %</span>
+          {/* <span className="text-green-600 text-sm ml-2">Économisez 25 %</span> */}
         </div>
       </div>
 

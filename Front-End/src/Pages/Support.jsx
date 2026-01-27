@@ -198,10 +198,20 @@ export default function SupportPage() {
             Notre équipe support est à votre disposition
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-6 mt-6 text-md">
+          {/* <div className="flex flex-col sm:flex-row gap-6 mt-6 text-md">
             <div className="flex items-center gap-2">
               <FaEnvelope /> contact@jytecmdb.net
             </div>
+          </div> */}
+
+            <div className="flex mt-6 items-center gap-2">
+            <FaEnvelope />
+            <a
+              href="mailto:contact@jytecmdb.net"
+              className="underline hover:text-emerald-200 transition"
+            >
+              contact@jytecmdb.net
+            </a>
           </div>
 
           {/* <button className="mt-6 px-8 py-2.5 rounded-full border border-white hover:bg-white hover:text-[#063c35] transition">

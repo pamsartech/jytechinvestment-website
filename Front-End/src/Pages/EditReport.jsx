@@ -64,6 +64,19 @@ export default function EditReport() {
     }).format(num);
   };
 
+  const parseFR = (v) => {
+    if (v === "" || v === null || v === undefined) return 0;
+
+    return (
+      Number(
+        v
+          .toString()
+          .replace(/\s/g, "") // remove spaces
+          .replace(",", "."), // french decimal → dot
+      ) || 0
+    );
+  };
+
   useEffect(() => {
     if (!id) return;
 
@@ -301,18 +314,43 @@ export default function EditReport() {
 
   //   return Number(total.toFixed(0));
   // }, [expenses]);
-  const totalExpenseCost = useMemo(() => {
-    const total = expenses.reduce((sum, e) => {
-      // Force whole numbers only
-      const price = Math.floor(Number(e.price || 0));
-      const vatRate = Math.floor(Number(e.vatRate || 0));
 
-      const vat = (price * vatRate) / 100;
+  // const totalExpenseCost = useMemo(() => {
+  //   const total = expenses.reduce((sum, e) => {
 
-      return sum + price + vat;
+  //     const price = Math.floor(Number(e.price || 0));
+  //     const vatRate = Math.floor(Number(e.vatRate || 0));
+
+  //     const vat = (price * vatRate) / 100;
+
+  //     return sum + price + vat;
+  //   }, 0);
+
+  //   return Math.floor(total);
+  // }, [expenses]);
+
+  // const totalExpenseCost = useMemo(() => {
+  //   return expenses.reduce((sum, e) => {
+  //     const price = parseFR(e.price); // HT
+  //     const vatRate = parseFR(e.vatRate); // %
+
+  //     const vat = (price * vatRate) / 100;
+  //     const totalTTC = price + vat;
+
+  //     return sum + totalTTC;
+  //   }, 0);
+  // }, [expenses]);
+
+   const totalExpenseCost = useMemo(() => {
+    return expenses.reduce((sum, e) => {
+      const ttc = parseFR(e.price); // user input = TTC
+      const vatRate = parseFR(e.vatRate); // %
+
+      const vat = (ttc * vatRate) / 100; // TVA = TTC * rate / 100
+      const ht = ttc - vat; // HT = TTC - TVA
+
+      return sum + ttc; // sum TTC
     }, 0);
-
-    return Math.floor(total);
   }, [expenses]);
 
   /* ===========================
@@ -1130,19 +1168,27 @@ export default function EditReport() {
               <thead>
                 <tr className="text-left text-sm">
                   <th className="pb-3 font-medium">Intitulé</th>
-                  <th className="font-medium">Prix HT (€)</th>
+                  <th className="font-medium ">Prix TTC (€)</th>
+
                   <th className="font-medium">Taux de TVA (%)</th>
                   <th className="font-medium pr-6">TVA (€)</th>
-                  <th className="font-medium ">Prix TTC (€)</th>
+                  <th className="font-medium">Prix HT (€)</th>
                   <th />
                 </tr>
               </thead>
 
               <tbody className="">
-                {expenses.map((e) => {
+                {/* {expenses.map((e) => {
                   const price = Number(e.price || 0);
                   const vat = (price * Number(e.vatRate || 0)) / 100;
-                  const total = price + vat;
+                  const total = price + vat; */}
+                {expenses.map((e) => {
+                  const ttc = parseFR(e.price); // user input = TTC
+                  const vatRate = parseFR(e.vatRate); // %
+
+                  const vat = (ttc * vatRate) / 100; // TVA = TTC * rate / 100
+                  const ht = ttc - vat; // HT = TTC - TVA
+                  const total = ttc; // TTC stays TTC
 
                   return (
                     <tr
@@ -1158,10 +1204,11 @@ export default function EditReport() {
                         />
                       </td>
 
-                      <td className="px-1 pr-6 py-4">
+                      <td className="px-4 py-4 font-medium text-gray-900">
+                        {/* {formatFRNumber(total)} */}
                         <Cell
                           numeric
-                          placeholder="250,000"
+                          placeholder="1 200,00"
                           value={e.price}
                           onChange={(v) => updateExpense(e.id, "price", v)}
                         />
@@ -1205,11 +1252,17 @@ export default function EditReport() {
                       </td>
 
                       <td className="px-4 py-4  font-medium text-gray-900">
-                        {vat.toFixed(0)}
+                        {formatFRNumber(vat)}
                       </td>
 
-                      <td className="px-4 py-4 font-medium text-gray-900">
-                        {total.toFixed(0)}
+                      <td className="px-1 pr-6 py-4">
+                        {/* <Cell
+                          numeric
+                          placeholder="250,000"
+                          value={e.price}
+                          onChange={(v) => updateExpense(e.id, "price", v)}
+                        /> */}
+                        {formatFRNumber(ht)}
                       </td>
 
                       <td className="px-4 py-4 text-right">
@@ -1264,7 +1317,7 @@ export default function EditReport() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Taux d’apport (%)
+                Pourcentage d’apport (%)
               </span>
 
               <Input
@@ -1307,7 +1360,7 @@ export default function EditReport() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Apport personnel (€)
+                Apport (€)
               </span>
               <Input
                 numeric
@@ -1319,7 +1372,7 @@ export default function EditReport() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Taux d’intérêt (%)
+                Taux d’emprunt (%)
               </span>
 
               <Input
@@ -1457,7 +1510,7 @@ export default function EditReport() {
 
             <label>
               <span className="text-gray-400 text-sm  font-semibold">
-                Taux de montage (%)
+                Taux hypotheque (%)
               </span>
 
               <Input
@@ -1502,7 +1555,7 @@ export default function EditReport() {
 
             <label>
               <span className="text-gray-400 text-sm font-semibold">
-                Frais de montage (€)
+                Frais d’hypotheque (€)
               </span>
               <Input
                 numeric
