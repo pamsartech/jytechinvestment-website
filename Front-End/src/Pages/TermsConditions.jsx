@@ -3,6 +3,8 @@ import axios from "axios";
 import DOMPurIFY from "dompurify";
 import { LuLockKeyholeOpen } from "react-icons/lu";
 import { Skeleton } from "@mui/material";
+import { BsArrowLeft } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 
 const TermsHeaderSkeleton = () => (
   <div className="bg-[#063F34] px-6 py-10 md:py-20">
@@ -40,6 +42,7 @@ const TermsContentSkeleton = () => (
 export default function TermsConditions() {
   const [terms, setTerms] = useState("");
   const [loading, setLoading] = useState(true);
+   const navigate = useNavigate();
 
   const token = localStorage.getItem("authToken");
 
@@ -71,6 +74,12 @@ export default function TermsConditions() {
   return (
     <div className="min-h-screen bg-white text-gray-800">
       <div className="bg-[#063F34] px-6 py-10 md:py-20">
+          <button
+            onClick={() => navigate("/")}
+            className="text-white  border-white px-3 py-2 md:ml-10 rounded-xl"
+          >
+            <BsArrowLeft size={20} />
+          </button>
         <div className="w-full md:w-full justify-center mx-auto md:px-44 flex gap-4">
           <div className="h-13 w-13 flex items-center justify-center rounded-2xl bg-white/10 text-white">
             <LuLockKeyholeOpen size={18} />

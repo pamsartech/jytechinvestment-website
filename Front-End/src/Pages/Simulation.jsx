@@ -64,7 +64,6 @@ const renderCustomLabel = ({
   );
 };
 
-
 /* shared card styles */
 const baseCard =
   "flex flex-col justify-between rounded-[18px] border border-gray-100 bg-white px-4 py-4 md:px-6 md:py-10 shadow-sm/10";
@@ -81,22 +80,60 @@ const iconBase =
 //       minimumFractionDigits: decimals,
 //       maximumFractionDigits: decimals,
 //     })
-//     .replace(/,/g, " "); 
+//     .replace(/,/g, " ");
 
 //   return `${formatted} €`;
 // };
 
+// comma based vales
+// const formatCurrency = (v, decimals = 2) => {
+//   if (v === undefined || v === null || isNaN(v)) return "—";
+
+//   return (
+//     Number(v).toLocaleString("fr-FR", {
+//       minimumFractionDigits: decimals,
+//       maximumFractionDigits: decimals,
+//     }) + " €"
+//   );
+// };
+
+// const formatPercent = (v, decimals = 0) => {
+//   if (v === undefined || v === null || isNaN(v)) return "—";
+
+//   return (
+//     Number(v).toLocaleString("fr-FR", {
+//       minimumFractionDigits: 0,
+//       maximumFractionDigits: decimals,
+//     }) + " %"
+//   );
+// };
+
+// dot based value
 const formatCurrency = (v, decimals = 2) => {
   if (v === undefined || v === null || isNaN(v)) return "—";
 
   return (
-    Number(v).toLocaleString("fr-FR", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }) + " €"
+    Number(v)
+      .toLocaleString("fr-FR", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })
+      .replace(",", ".") + " €"
   );
 };
 
+const formatPercent = (v, decimals = 2) => {
+  if (v === undefined || v === null || isNaN(v)) return "—";
+
+  return (
+    Number(v)
+      .toLocaleString("fr-FR", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })
+      .replace(",", ".") + " %"
+  );
+};
 
 // const formatPercent = (v, decimals = 0) => {
 //   if (v === undefined || v === null || isNaN(v)) return "—";
@@ -106,23 +143,10 @@ const formatCurrency = (v, decimals = 2) => {
 //       minimumFractionDigits: 0,
 //       maximumFractionDigits: decimals,
 //     })
-//     .replace(/,/g, " "); 
+//     .replace(/,/g, " ");
 
 //   return `${formatted}%`;
 // };
-
-const formatPercent = (v, decimals = 0) => {
-  if (v === undefined || v === null || isNaN(v)) return "—";
-
-  return (
-    Number(v).toLocaleString("fr-FR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: decimals,
-    }) + " %"
-  );
-};
-
-
 
 const MetricCardSkeleton = () => (
   <div className="flex flex-col justify-between rounded-[18px] border border-gray-100 bg-white px-4 py-4 md:px-6 md:py-10 shadow-sm/10">
@@ -165,7 +189,6 @@ const HeaderSkeleton = () => (
   </div>
 );
 
-
 const ChartSkeleton = () => (
   <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
     <Skeleton variant="text" width={220} height={28} />
@@ -180,7 +203,6 @@ const ChartSkeleton = () => (
     </div>
   </div>
 );
-
 
 export default function Simulation() {
   const { projectId } = useParams();
@@ -202,26 +224,25 @@ export default function Simulation() {
   };
 
   useEffect(() => {
-  if (!token) {
-    toast.error("Votre session a expiré. Veuillez vous reconnecter.");
-    localStorage.removeItem("authToken");
-    navigate("/login", { replace: true });
-  }
-}, [token, navigate]);
+    if (!token) {
+      toast.error("Votre session a expiré. Veuillez vous reconnecter.");
+      localStorage.removeItem("authToken");
+      navigate("/login", { replace: true });
+    }
+  }, [token, navigate]);
 
+  const handleAuthError = (error) => {
+    const status = error?.response?.status;
 
-const handleAuthError = (error) => {
-  const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("authToken");
+      toast.error("Session expirée. Veuillez vous reconnecter.");
+      navigate("/login", { replace: true });
+      return true;
+    }
 
-  if (status === 401 || status === 403) {
-    localStorage.removeItem("authToken");
-    toast.error("Session expirée. Veuillez vous reconnecter.");
-    navigate("/login", { replace: true });
-    return true;
-  }
-
-  return false;
-};
+    return false;
+  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -241,13 +262,12 @@ const handleAuthError = (error) => {
         setProjectName(res.data.projectName || "");
         setCreatedAt(res.data.createdAt || "");
       } catch (err) {
-  console.error(err);
+        console.error(err);
 
-  if (handleAuthError(err)) return;
+        if (handleAuthError(err)) return;
 
-  setError("Failed to load simulation data");
-}
- finally {
+        setError("Failed to load simulation data");
+      } finally {
         setLoading(false);
       }
     };
@@ -302,16 +322,15 @@ const handleAuthError = (error) => {
 
       toast.success("Rapport téléchargé avec succès.");
     } catch (err) {
-  console.error("Download failed:", err);
+      console.error("Download failed:", err);
 
-  if (handleAuthError(err)) return;
+      if (handleAuthError(err)) return;
 
-  toast.error(
-    err?.response?.data?.message ||
-      "Le téléchargement du rapport a échoué. Veuillez réessayer.",
-  );
-}
-finally {
+      toast.error(
+        err?.response?.data?.message ||
+          "Le téléchargement du rapport a échoué. Veuillez réessayer.",
+      );
+    } finally {
       setDownloading(false);
     }
   };
@@ -369,62 +388,68 @@ finally {
   //   ...item,
   //   value: Math.abs(item.value),
   // }));
-  const displayMarginChartData = marginChartData.map((item) => ({
-  ...item,
-  value: item.value > 0 ? item.value : 0,
-}));
 
+  const displayMarginChartData = marginChartData.map((item) => ({
+    ...item,
+    rawValue: item.value, // keep original (can be < 0)
+    value: item.value > 0 ? item.value : 0, // bar height
+  }));
+
+  //   const displayMarginChartData = marginChartData.map((item) => ({
+  //   ...item,
+  //   value: item.value > 0 ? item.value : 0,
+  // }));
 
   // if (loading) return <div className="p-10 text-center">Loading...</div>;
   if (loading)
-  return (
-    <div className="min-h-screen bg-[#f5f7f9]">
-      <HeaderSkeleton />
+    return (
+      <div className="min-h-screen bg-[#f5f7f9]">
+        <HeaderSkeleton />
 
-      <main className="px-4 md:px-6 pt-10 pb-16">
-        {/* Project Name + Button */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 px-4 md:px-0 md:mx-14">
-          <Skeleton variant="rectangular" width={300} height={52} />
-          <Skeleton variant="rectangular" width={220} height={48} />
-        </div>
+        <main className="px-4 md:px-6 pt-10 pb-16">
+          {/* Project Name + Button */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 px-4 md:px-0 md:mx-14">
+            <Skeleton variant="rectangular" width={300} height={52} />
+            <Skeleton variant="rectangular" width={220} height={48} />
+          </div>
 
-        {/* Metric Cards */}
-        <div className="md:mx-16 mt-10 md:mt-20">
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-10">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <MetricCardSkeleton key={i} />
-            ))}
-          </section>
-        </div>
+          {/* Metric Cards */}
+          <div className="md:mx-16 mt-10 md:mt-20">
+            <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-10">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <MetricCardSkeleton key={i} />
+              ))}
+            </section>
+          </div>
 
-        {/* Financing Cards */}
-        <div className="md:mx-16">
-          <Skeleton variant="text" width={200} height={32} />
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mt-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <MetricCardSkeleton key={i} />
-            ))}
-          </section>
-        </div>
+          {/* Financing Cards */}
+          <div className="md:mx-16">
+            <Skeleton variant="text" width={200} height={32} />
+            <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mt-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <MetricCardSkeleton key={i} />
+              ))}
+            </section>
+          </div>
 
-        {/* Synthesis Cards */}
-        <div className="md:mx-16 mt-10 md:mt-20">
-          <Skeleton variant="text" width={180} height={32} />
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mt-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <MetricCardSkeleton key={i} />
-            ))}
-          </section>
-        </div>
+          {/* Synthesis Cards */}
+          <div className="md:mx-16 mt-10 md:mt-20">
+            <Skeleton variant="text" width={180} height={32} />
+            <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mt-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <MetricCardSkeleton key={i} />
+              ))}
+            </section>
+          </div>
 
-        {/* Charts */}
-        <div className="w-full px-2 sm:px-4 md:px-6 py-6 md:py-10 mt-12 md:mt-20 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartSkeleton />
-          <ChartSkeleton />
-        </div>
-      </main>
-    </div>
-  );
+          {/* Charts */}
+          <div className="w-full px-2 sm:px-4 md:px-6 py-6 md:py-10 mt-12 md:mt-20 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ChartSkeleton />
+            <ChartSkeleton />
+          </div>
+        </main>
+      </div>
+    );
 
   if (error)
     return <div className="p-10 text-center text-red-500">{error}</div>;
@@ -558,9 +583,10 @@ finally {
 
         {/* Financing Cards  */}
         <div className="md:mx-16">
-          <h1 className="text-2xl font-semibold pb-2 mx-3 mt-2">Financement </h1>
+          <h1 className="text-2xl font-semibold pb-2 mx-3 mt-2">
+            Financement{" "}
+          </h1>
           <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5">
-
             {/* Total financing */}
             <div className={baseCard}>
               <div>
@@ -598,7 +624,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Pourcentage d’apport 
+                  Pourcentage d’apport
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatPercent(data.contributionPercentage)}
@@ -703,7 +729,6 @@ finally {
         <div className="md:mx-16 mt-10 md:mt-20">
           <h1 className="text-2xl pb-2 mx-2 font-semibold">Synthèse</h1>
           <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mb-10">
-            
             {/* total cost */}
             <div className={baseCard}>
               <div>
@@ -711,7 +736,7 @@ finally {
                   <FaChartLine />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                   Coût total du projet 
+                  Coût total du projet
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.totalCost)}
@@ -756,7 +781,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Chiffre d’affaires 
+                  Chiffre d’affaires
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.turnOver)}
@@ -786,7 +811,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  TVA intégrale 
+                  TVA intégrale
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.fullVat)}
@@ -816,7 +841,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  TVA déductible 
+                  TVA déductible
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.recoverableVAT)}
@@ -846,7 +871,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Chiffre d’affaires des lots 
+                  Chiffre d’affaires des lots
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.lotsTotalRevenue)}
@@ -904,14 +929,14 @@ finally {
         {/* Graphical analysis */}
         <div className="w-full px-2 sm:px-4 md:px-6 py-6 md:py-10 mt-12 md:mt-20">
           <h2 className="mb-4 md:mb-6 text-xl sm:text-2xl font-semibold">
-            Analyse graphique 
+            Analyse graphique
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             {/* -------------------- PIE / DONUT -------------------- */}
             <div className="rounded-2xl bg-white p-2 sm:p-6 shadow-sm">
               <h3 className="mb-3 sm:mb-6 text-base sm:text-lg font-semibold">
-                Répartition des coûts 
+                Répartition des coûts
               </h3>
 
               {/* Responsive Height Wrapper */}
@@ -956,7 +981,7 @@ finally {
             {/* -------------------- BAR CHART -------------------- */}
             <div className="rounded-2xl bg-white p-2 sm:p-6 shadow-sm">
               <h3 className="mb-3 sm:mb-6 text-base sm:text-lg font-semibold">
-                Analyse de la TVA 
+                Analyse de la TVA
               </h3>
 
               {/* Responsive Height Wrapper */}
@@ -982,10 +1007,24 @@ finally {
                       tick={{ fontSize: 10 }}
                     />
 
-                    <Tooltip
+                    {/* <Tooltip
                       formatter={(value) =>
                         `${Number(value).toLocaleString()} €`
                       }
+                    /> */}
+                    <Tooltip
+                      formatter={(value, name, props) => {
+                        const raw = props.payload.rawValue;
+
+                        if (raw <= 0) {
+                          return [
+                            `${raw.toLocaleString("fr-FR")} € (valeur négative)`,
+                            name,
+                          ];
+                        }
+
+                        return [`${value.toLocaleString("fr-FR")} €`, name];
+                      }}
                     />
 
                     <Bar dataKey="value" barSize={50} radius={[10, 10, 0, 0]}>

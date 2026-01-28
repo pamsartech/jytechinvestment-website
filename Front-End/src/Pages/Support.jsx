@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FiMessageCircle, FiPhone, FiCalendar } from "react-icons/fi";
 import { toast } from "react-toastify";
+import { BsArrowLeft } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 
 export default function SupportPage() {
   const [videoData, setVideoData] = useState(null);
@@ -14,6 +16,8 @@ export default function SupportPage() {
   const [ticketError, setTicketError] = useState("");
   const [ticketSuccess, setTicketSuccess] = useState("");
 
+  const navigate = useNavigate();
+
   const token = localStorage.getItem("authToken");
 
   const authConfig = {
@@ -23,39 +27,38 @@ export default function SupportPage() {
   };
 
   const createTicket = async () => {
-  if (ticketLoading || ticketSuccess) return; // stop resending
+    if (ticketLoading || ticketSuccess) return; // stop resending
 
-  try {
-    setTicketLoading(true);
-    setTicketError("");
-    setTicketSuccess("");
+    try {
+      setTicketLoading(true);
+      setTicketError("");
+      setTicketSuccess("");
 
-    const res = await axios.post(
-      "https://api.emibocquillon.fr/api/support/ticket",
-      {},
-      authConfig
-    );
+      const res = await axios.post(
+        "https://api.emibocquillon.fr/api/support/ticket",
+        {},
+        authConfig,
+      );
 
-    if (res.data?.success) {
-      setTicketSuccess("Ticket créé avec succès !");
-      toast.success("Ticket créé avec succès !");
-    } else {
-      setTicketError("Impossible de créer le ticket.");
-      toast.error("Impossible de créer le ticket.");
+      if (res.data?.success) {
+        setTicketSuccess("Ticket créé avec succès !");
+        toast.success("Ticket créé avec succès !");
+      } else {
+        setTicketError("Impossible de créer le ticket.");
+        toast.error("Impossible de créer le ticket.");
+      }
+    } catch (err) {
+      console.error("Create ticket failed:", err);
+
+      const message =
+        err.response?.data?.message || "Erreur lors de la création du ticket.";
+
+      setTicketError(message);
+      toast.error(message);
+    } finally {
+      setTicketLoading(false);
     }
-  } catch (err) {
-    console.error("Create ticket failed:", err);
-
-    const message =
-      err.response?.data?.message || "Erreur lors de la création du ticket.";
-
-    setTicketError(message);
-    toast.error(message);
-  } finally {
-    setTicketLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     const fetchVideoGuide = async () => {
@@ -94,6 +97,12 @@ export default function SupportPage() {
     <div className="w-full bg-white">
       {/* Top Banner */}
       <div className="bg-[#063F34] text-white py-12 px-4">
+        <button
+          onClick={() => navigate("/")}
+          className="text-white  border-white px-3 py-2 md:ml-10 rounded-xl"
+        >
+          <BsArrowLeft size={20} />
+        </button>
         <div className="max-w-7xl mx-auto flex items-center py-4 md:py-10 px-4 md:px-40 gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             {/* Icon */}
@@ -204,7 +213,7 @@ export default function SupportPage() {
             </div>
           </div> */}
 
-            <div className="flex mt-6 items-center gap-2">
+          <div className="flex mt-6 items-center gap-2">
             <FaEnvelope />
             <a
               href="mailto:contact@jytecmdb.net"

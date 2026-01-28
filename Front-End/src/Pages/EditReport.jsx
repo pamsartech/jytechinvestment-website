@@ -1064,9 +1064,13 @@ export default function EditReport() {
                     </td>
 
                     {/* AUTO Price / m² */}
-                    <td className="px-4 font-semibold text-gray-900">
-                      {lot.pricePerM2 || "-"}
+                     <td className="px-4 font-semibold text-gray-900">
+                      {lot.pricePerM2 ? formatFRNumber(lot.pricePerM2) : "-"}
                     </td>
+
+                    {/* <td className="px-4 font-semibold text-gray-900">
+                      {lot.pricePerM2 || "-"}
+                    </td> */}
 
                     {/* VAT */}
                     <td className="px-4">

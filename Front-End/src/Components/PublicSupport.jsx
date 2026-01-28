@@ -13,6 +13,8 @@ import axios from "axios";
 import PublicNavbar from "./PublicNavbar";
 import PublicFooter from "./PublicFooter";
 import { toast } from "react-toastify";
+import { BsArrowLeft } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 import { FiMessageCircle, FiPhone, FiCalendar } from "react-icons/fi";
 
 export default function PublicSupport() {
@@ -22,6 +24,7 @@ export default function PublicSupport() {
 
   const [openSupportModal, setOpenSupportModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const navigate = useNavigate();
 
   const [supportForm, setSupportForm] = useState({
     name: "",
@@ -113,7 +116,14 @@ export default function PublicSupport() {
       <PublicNavbar />
       {/* Top Banner */}
       <div className="bg-[#063F34] text-white py-12 px-4">
+         <button
+            onClick={() => navigate("/login")}
+            className="text-white  border-white px-3 py-2 md:ml-10 rounded-xl"
+          >
+            <BsArrowLeft size={20} />
+          </button>
         <div className="max-w-7xl mx-auto flex items-center py-4 md:py-10 px-4 md:px-40 gap-4">
+           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             {/* Icon */}
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 flex items-center justify-center shrink-0">
