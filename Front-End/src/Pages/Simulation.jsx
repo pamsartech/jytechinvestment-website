@@ -365,10 +365,15 @@ finally {
     ];
   }, [data]);
 
+  // const displayMarginChartData = marginChartData.map((item) => ({
+  //   ...item,
+  //   value: Math.abs(item.value),
+  // }));
   const displayMarginChartData = marginChartData.map((item) => ({
-    ...item,
-    value: Math.abs(item.value),
-  }));
+  ...item,
+  value: item.value > 0 ? item.value : 0,
+}));
+
 
   // if (loading) return <div className="p-10 text-center">Loading...</div>;
   if (loading)
@@ -555,6 +560,7 @@ finally {
         <div className="md:mx-16">
           <h1 className="text-2xl font-semibold pb-2 mx-3 mt-2">Financement </h1>
           <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5">
+
             {/* Total financing */}
             <div className={baseCard}>
               <div>
@@ -637,7 +643,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Frais de commission et virgule
+                  Frais de commission
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.commission)}
@@ -697,8 +703,8 @@ finally {
         <div className="md:mx-16 mt-10 md:mt-20">
           <h1 className="text-2xl pb-2 mx-2 font-semibold">Synthèse</h1>
           <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-5 mb-10">
+            
             {/* total cost */}
-
             <div className={baseCard}>
               <div>
                 <div className={`${iconBase} bg-gray-100 text-gray-600`}>
@@ -765,7 +771,7 @@ finally {
                   <FaReceipt />
                 </div>
                 <p className="text-[11px] font-medium tracking-[0.04em] uppercase text-gray-500">
-                  Marge et Virgule
+                  Marge
                 </p>
                 <p className="mt-2 text-lg md:text-2xl font-semibold">
                   {formatCurrency(data.margin)}

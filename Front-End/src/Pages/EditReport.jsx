@@ -132,14 +132,35 @@ export default function EditReport() {
         /* ===========================
          EXPENSES
       =========================== */
+
+        /* ===========================
+   EXPENSES (FIXED)
+=========================== */
+
         if (project.expenses?.length) {
           setExpenses(
-            project.expenses.map((e, index) => ({
-              id: Date.now() + index,
-              label: e.label || "",
-              price: e.priceExclTax?.toString() || "",
-              vatRate: e.vatRate?.toString() || "",
-            })),
+            project.expenses.map((e, index) => {
+              const ttc = Number(e.priceInclTax || 0);
+              const vatRate = Number(e.vatRate || 0);
+
+              let vat = 0;
+              let ht = 0;
+
+              if (ttc > 0 && vatRate > 0) {
+                vat = (ttc * vatRate) / (100 + vatRate);
+                ht = ttc - vat;
+              } else {
+                ht = ttc;
+              }
+
+              return {
+                id: Date.now() + index,
+                label: e.label || "",
+                price: ttc ? ttc.toFixed(0) : "", // TTC shown in input
+                vatRate: vatRate ? vatRate.toString() : "",
+                ht: Number(ht.toFixed(2)), // stored for submit
+              };
+            }),
           );
         }
 
@@ -291,13 +312,41 @@ export default function EditReport() {
      4. EXPENSES (UNCHANGED)
      =========================== */
   const [expenses, setExpenses] = useState([
-    { id: 1, label: "", price: "", vatRate: "" },
-    { id: 2, label: "", price: "", vatRate: "" },
+    { id: 1, label: "", price: "", vatRate: "", ht: "" },
+    { id: 2, label: "", price: "", vatRate: "", ht: "" },
   ]);
+
+  // const updateExpense = (id, field, value) => {
+  //   setExpenses((prev) =>
+  //     prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+  //   );
+  // };
 
   const updateExpense = (id, field, value) => {
     setExpenses((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+      prev.map((e) => {
+        if (e.id !== id) return e;
+
+        const updated = { ...e, [field]: value };
+
+        const ttc = parseFR(updated.price); // Prix TTC
+        const vatRate = parseFR(updated.vatRate); // %
+
+        let vat = 0;
+        let ht = 0;
+
+        if (ttc > 0 && vatRate > 0) {
+          vat = (ttc * vatRate) / (100 + vatRate);
+          ht = ttc - vat;
+        } else {
+          ht = ttc;
+        }
+
+        return {
+          ...updated,
+          ht: Number(ht.toFixed(0)),
+        };
+      }),
     );
   };
 
@@ -305,51 +354,10 @@ export default function EditReport() {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
 
-  // const totalExpenseCost = useMemo(() => {
-  //   const total = expenses.reduce((sum, e) => {
-  //     const price = Number(e.price || 0);
-  //     const vat = (price * Number(e.vatRate || 0)) / 100;
-  //     return sum + price + vat;
-  //   }, 0);
-
-  //   return Number(total.toFixed(0));
-  // }, [expenses]);
-
-  // const totalExpenseCost = useMemo(() => {
-  //   const total = expenses.reduce((sum, e) => {
-
-  //     const price = Math.floor(Number(e.price || 0));
-  //     const vatRate = Math.floor(Number(e.vatRate || 0));
-
-  //     const vat = (price * vatRate) / 100;
-
-  //     return sum + price + vat;
-  //   }, 0);
-
-  //   return Math.floor(total);
-  // }, [expenses]);
-
-  // const totalExpenseCost = useMemo(() => {
-  //   return expenses.reduce((sum, e) => {
-  //     const price = parseFR(e.price); // HT
-  //     const vatRate = parseFR(e.vatRate); // %
-
-  //     const vat = (price * vatRate) / 100;
-  //     const totalTTC = price + vat;
-
-  //     return sum + totalTTC;
-  //   }, 0);
-  // }, [expenses]);
-
-   const totalExpenseCost = useMemo(() => {
+  const totalExpenseCost = useMemo(() => {
     return expenses.reduce((sum, e) => {
-      const ttc = parseFR(e.price); // user input = TTC
-      const vatRate = parseFR(e.vatRate); // %
-
-      const vat = (ttc * vatRate) / 100; // TVA = TTC * rate / 100
-      const ht = ttc - vat; // HT = TTC - TVA
-
-      return sum + ttc; // sum TTC
+      const ttc = parseFR(e.price); // TTC
+      return sum + ttc;
     }, 0);
   }, [expenses]);
 
@@ -656,7 +664,7 @@ export default function EditReport() {
       expenses: expenses.map((e) => ({
         id: e.id,
         label: e.label,
-        priceExclTax: toNumber(e.price),
+        priceExclTax: toNumber(e.ht),
         vatRate: toNumber(e.vatRate),
       })),
       financing: {
@@ -697,7 +705,7 @@ export default function EditReport() {
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        "Something went wrong. Please try again.";
+        "Une erreur s'est produite. Veuillez réessayer.";
 
       setApiError(message);
       toast.error(message);
@@ -764,7 +772,7 @@ export default function EditReport() {
       expenses: expenses.map((e) => ({
         id: e.id,
         label: e.label || null,
-        priceExclTax: toNumber(e.price),
+        priceExclTax: toNumber(e.ht),
         vatRate: toNumber(e.vatRate),
       })),
 
@@ -807,7 +815,7 @@ export default function EditReport() {
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        "Unable to save draft. Please try again.";
+        "Impossible d'enregistrer le brouillon. Veuillez réessayer.";
 
       setApiError(message);
       toast.error(message);
@@ -828,8 +836,8 @@ export default function EditReport() {
     });
     setLots([createLot(1), createLot(2)]);
     setExpenses([
-      { id: 1, label: "", price: "", vatRate: "" },
-      { id: 2, label: "", price: "", vatRate: "" },
+      { id: 1, label: "", price: "", vatRate: "", ht: "" },
+      { id: 2, label: "", price: "", vatRate: "", ht: "" },
     ]);
     setFinancing({
       applicationFee: "",
@@ -1153,6 +1161,7 @@ export default function EditReport() {
                     label: "",
                     price: "",
                     vatRate: "",
+                    ht: "",
                   },
                 ])
               }
@@ -1178,16 +1187,20 @@ export default function EditReport() {
               </thead>
 
               <tbody className="">
-                {/* {expenses.map((e) => {
-                  const price = Number(e.price || 0);
-                  const vat = (price * Number(e.vatRate || 0)) / 100;
-                  const total = price + vat; */}
                 {expenses.map((e) => {
                   const ttc = parseFR(e.price); // user input = TTC
                   const vatRate = parseFR(e.vatRate); // %
 
-                  const vat = (ttc * vatRate) / 100; // TVA = TTC * rate / 100
-                  const ht = ttc - vat; // HT = TTC - TVA
+                  let vat = 0;
+                  let ht = 0;
+
+                  if (ttc > 0 && vatRate > 0) {
+                    vat = (ttc * vatRate) / (100 + vatRate);
+                    ht = ttc - vat;
+                  } else {
+                    ht = ttc;
+                  }
+
                   const total = ttc; // TTC stays TTC
 
                   return (
@@ -1591,7 +1604,7 @@ export default function EditReport() {
             disabled={draftSaving}
           >
             <LuFileText className="inline-block mr-2" />
-            {draftSaving ? "Saving..." : "Enregistrer en brouillon"}
+            {draftSaving ? "Soumission..." : "Enregistrer en brouillon"}
           </button>
 
           <button
@@ -1602,7 +1615,7 @@ export default function EditReport() {
             }`}
           >
             <LuFileText className="inline-block mr-2" />
-            {submitting ? "Submitting..." : "Valider l’analyse"}
+            {submitting ? "Soumission..." : "Valider l’analyse"}
           </button>
         </div>
       </form>

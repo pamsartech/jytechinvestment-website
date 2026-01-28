@@ -182,15 +182,42 @@ export default function AnalyseOperation() {
   /* ===========================
      4. EXPENSES (UNCHANGED)
      =========================== */
- const [expenses, setExpenses] = useState([
-  { id: 1, label: "", price: "", vatRate: "", ht: "" },
-  { id: 2, label: "", price: "", vatRate: "", ht: "" },
-]);
+  const [expenses, setExpenses] = useState([
+    { id: 1, label: "", price: "", vatRate: "", ht: "" },
+    { id: 2, label: "", price: "", vatRate: "", ht: "" },
+  ]);
 
+  // const updateExpense = (id, field, value) => {
+  //   setExpenses((prev) =>
+  //     prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+  //   );
+  // };
 
   const updateExpense = (id, field, value) => {
     setExpenses((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+      prev.map((e) => {
+        if (e.id !== id) return e;
+
+        const updated = { ...e, [field]: value };
+
+        const ttc = parseFR(updated.price); // Prix TTC
+        const vatRate = parseFR(updated.vatRate); // %
+
+        let vat = 0;
+        let ht = 0;
+
+        if (ttc > 0 && vatRate > 0) {
+          vat = (ttc * vatRate) / (100 + vatRate);
+          ht = ttc - vat;
+        } else {
+          ht = ttc;
+        }
+
+        return {
+          ...updated,
+          ht: Number(ht.toFixed(0)),
+        };
+      }),
     );
   };
 
@@ -198,19 +225,12 @@ export default function AnalyseOperation() {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
 
-
   const totalExpenseCost = useMemo(() => {
     return expenses.reduce((sum, e) => {
-      const ttc = parseFR(e.price); // user input = TTC
-      const vatRate = parseFR(e.vatRate); // %
-
-      const vat = (ttc * vatRate) / 100; // TVA = TTC * rate / 100
-      const ht = ttc - vat; // HT = TTC - TVA
-
-      return sum + ttc; // sum TTC
+      const ttc = parseFR(e.price); // Prix TTC
+      return sum + ttc; // Sum TTC only
     }, 0);
   }, [expenses]);
-
 
   /* ===========================
      5. FINANCING
@@ -515,7 +535,7 @@ export default function AnalyseOperation() {
       expenses: expenses.map((e) => ({
         id: e.id,
         label: e.label,
-        priceExclTax: toNumber(e.price),
+        priceExclTax: toNumber(e.ht),
         vatRate: toNumber(e.vatRate),
       })),
       financing: {
@@ -556,7 +576,7 @@ export default function AnalyseOperation() {
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        "Something went wrong. Please try again.";
+        "Une erreur s'est produite. Veuillez réessayer.";
 
       setApiError(message);
       toast.error(message);
@@ -623,7 +643,7 @@ export default function AnalyseOperation() {
       expenses: expenses.map((e) => ({
         id: e.id,
         label: e.label || null,
-        priceExclTax: toNumber(e.price),
+        priceExclTax: toNumber(e.ht),
         vatRate: toNumber(e.vatRate),
       })),
 
@@ -666,7 +686,7 @@ export default function AnalyseOperation() {
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        "Unable to save draft. Please try again.";
+        "Impossible d'enregistrer le brouillon. Veuillez réessayer.";
 
       setApiError(message);
       toast.error(message);
@@ -1018,6 +1038,7 @@ export default function AnalyseOperation() {
                     label: "",
                     price: "",
                     vatRate: "",
+                    ht: "",
                   },
                 ])
               }
@@ -1044,14 +1065,20 @@ export default function AnalyseOperation() {
               </thead>
 
               <tbody className="">
-
-
                 {expenses.map((e) => {
                   const ttc = parseFR(e.price); // user input = TTC
                   const vatRate = parseFR(e.vatRate); // %
 
-                  const vat = (ttc * vatRate) / 100; // TVA = TTC * rate / 100
-                  const ht = ttc - vat; // HT = TTC - TVA
+                  let vat = 0;
+                  let ht = 0;
+
+                  if (ttc > 0 && vatRate > 0) {
+                    vat = (ttc * vatRate) / (100 + vatRate);
+                    ht = ttc - vat;
+                  } else {
+                    ht = ttc;
+                  }
+
                   const total = ttc; // TTC stays TTC
 
                   return (
@@ -1077,8 +1104,6 @@ export default function AnalyseOperation() {
                           onChange={(v) => updateExpense(e.id, "price", v)}
                         />
                       </td>
-
-                     
 
                       <td className="px-4 py-4">
                         <>
@@ -1131,7 +1156,7 @@ export default function AnalyseOperation() {
                         </td>
                       </td>
 
-                       <td className="px-1 pr-6 py-4">
+                      <td className="px-1 pr-6 py-4">
                         {/* <Cell
                           numeric
                           placeholder="250 000"
@@ -1470,7 +1495,7 @@ export default function AnalyseOperation() {
             disabled={draftSaving}
           >
             <LuFileText className="inline-block mr-2" />
-            {draftSaving ? "Saving..." : "Enregistrer en brouillon"}
+            {draftSaving ? "Soumission..." : "Enregistrer en brouillon"}
           </button>
 
           <button
@@ -1481,7 +1506,7 @@ export default function AnalyseOperation() {
             }`}
           >
             <LuFileText className="inline-block mr-2" />
-            {submitting ? "Submitting..." : "Valider l’analyse"}
+            {submitting ? "Soumission..." : "Valider l’analyse"}
           </button>
         </div>
       </form>
