@@ -16,6 +16,9 @@ export default function SupportPage() {
   const [ticketError, setTicketError] = useState("");
   const [ticketSuccess, setTicketSuccess] = useState("");
 
+  const [openSupportModal, setOpenSupportModal] = useState(false);
+  const [sending, setSending] = useState(false);
+
   const navigate = useNavigate();
 
   const token = localStorage.getItem("authToken");
@@ -24,6 +27,58 @@ export default function SupportPage() {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  };
+
+  const [supportForm, setSupportForm] = useState({
+    name: "",
+    email: "",
+    PhoneNumber: "",
+    message: "",
+  });
+
+  const handleSupportChange = (e) => {
+    setSupportForm({ ...supportForm, [e.target.name]: e.target.value });
+  };
+
+  const handleSupportSubmit = async () => {
+    if (
+      !supportForm.name ||
+      !supportForm.email ||
+      !supportForm.PhoneNumber ||
+      !supportForm.message
+    ) {
+      toast.warning("Veuillez remplir tous les champs");
+      return;
+    }
+
+    try {
+      setSending(true);
+
+      await axios.post(
+        "https://api.emibocquillon.fr/api/support/contact",
+        supportForm,
+      );
+
+      toast.success("Votre message a été envoyé avec succès");
+
+      setSupportForm({
+        name: "",
+        email: "",
+        PhoneNumber: "",
+        message: "",
+      });
+
+      setOpenSupportModal(false);
+    } catch (err) {
+      console.error(err);
+
+      toast.error(
+        err?.response?.data?.message ||
+          "Erreur lors de l’envoi du message. Veuillez réessayer.",
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
   const createTicket = async () => {
@@ -125,7 +180,7 @@ export default function SupportPage() {
       </div>
 
       {/*book a ticket Card */}
-      <div className="mt-15 flex items-center justify-center   px-4">
+      {/* <div className="mt-15 flex items-center justify-center   px-4">
         <div className="grid gap-6 md:grid-cols-1">
           <div className="w-80 rounded-3xl bg-white shadow-md border border-gray-200 px-8 py-10 flex flex-col items-center text-center">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E6EBEA]">
@@ -153,7 +208,7 @@ export default function SupportPage() {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Video Guide */}
       <div className="max-w-3xl mx-auto  mt-20">
@@ -226,8 +281,77 @@ export default function SupportPage() {
           {/* <button className="mt-6 px-8 py-2.5 rounded-full border border-white hover:bg-white hover:text-[#063c35] transition">
             Contacter le support
           </button> */}
+          <button
+            onClick={() => setOpenSupportModal(true)}
+            className="mt-6 px-8 py-2.5 rounded-full border border-white hover:bg-white hover:text-[#063c35] transition"
+          >
+            Contacter le support
+          </button>
         </div>
       </div>
+
+      {openSupportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 relative">
+            <h2 className="text-xl font-semibold mb-4">Contacter le support</h2>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="Nom"
+                value={supportForm.name}
+                onChange={handleSupportChange}
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring"
+              />
+
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={supportForm.email}
+                onChange={handleSupportChange}
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring"
+              />
+
+              <input
+                type="text"
+                name="PhoneNumber"
+                placeholder="Téléphone"
+                value={supportForm.PhoneNumber}
+                onChange={handleSupportChange}
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring"
+              />
+
+              <textarea
+                name="message"
+                placeholder="Votre message..."
+                value={supportForm.message}
+                onChange={handleSupportChange}
+                rows={4}
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setOpenSupportModal(false)}
+                className="px-4 py-2 rounded-lg border"
+              >
+                Annuler
+              </button>
+
+              <button
+                disabled={sending}
+                onClick={handleSupportSubmit}
+                className="px-5 py-2 rounded-lg bg-[#063c35] text-white hover:bg-[#052f2a] disabled:opacity-50"
+              >
+                {sending ? "Envoi..." : "Envoyer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

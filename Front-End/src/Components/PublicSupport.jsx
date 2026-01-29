@@ -78,6 +78,8 @@ export default function PublicSupport() {
     }
   };
 
+
+  
   useEffect(() => {
     const fetchVideoGuide = async () => {
       try {

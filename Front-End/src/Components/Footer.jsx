@@ -74,7 +74,9 @@ export default function Footer() {
           <div>
             <h4 className="mb-4 text-lg md:text-2xl heading font-semibold">Légal</h4>
             <ul className="space-y-3 text-sm text-white/70">
-              <li>Legal notice</li>
+              <li  onClick={() => navigate("/legal-notice")}
+                className=" cursor-pointer"
+              >Mentions légales</li>
               <li
                 onClick={() => navigate("/terms-conditions")}
                 className=" cursor-pointer"
@@ -87,7 +89,7 @@ export default function Footer() {
               >
                 Politique de confidentialité
               </li>
-              <li>Cookies</li>
+              {/* <li>Cookies</li> */}
             </ul>
           </div>
         </div>
@@ -97,12 +99,23 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 text-sm text-white/60 sm:flex-row">
-          <p>© 2025 ImmoRenta. Tous droits réservés.</p>
+          <p>© 2026 JTech MDB. Tous droits réservés.</p>
 
           <div className="flex items-center gap-4">
-            <span>Instagram</span>
-            <span>LinkedIn</span>
-            <span>X (twitter)</span>
+            <span> 
+              <a href="https://www.instagram.com/emi.bocquillon/"
+               className="underline hover:text-emerald-200 font-semibold transition">
+                 Instagram
+              </a>
+              
+            </span>
+            <span>
+              <a href="https://www.linkedin.com/in/emi-bocquillon-872383273/"
+               className="underline hover:text-emerald-200 font-semibold transition">
+                 LinkedIn
+              </a>
+            </span>
+            {/* <span>X (twitter)</span> */}
           </div>
         </div>
       </div>

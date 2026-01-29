@@ -9,6 +9,7 @@ import Footer from "./Components/Footer";
 import PublicTermsConditions from "./Components/PublicTermsConditions";
 import PublicPrivacyPolicy from "./Components/PublicPrivacyPolicy";
 import PublicSubscription from "./Components/PublicSubscription";
+import PublicLegalNotice from "./Components/PublicLegalNotice";
 import PublicSupport from "./Components/PublicSupport";
 
 // Pages
@@ -24,6 +25,7 @@ import SuccessPayment from "./Pages/SuccessPayment";
 import FailedPayment from "./Pages/FailedPayment";
 import PrivacyPolicy from "./Pages/PrivacyPolicy";
 import TermsConditions from "./Pages/TermsConditions";
+import LegalNotice from "./Pages/LegalNotice";
 import EditReport from "./Pages/EditReport";
 import Profile from "./Components/Profile";
 import { AuthProvider, useAuth } from "./Context/AuthContext";
@@ -66,6 +68,7 @@ const ProtectedLayout = () => (
        <Route path="/edit-report/:id" element={<EditReport />} />
        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
        <Route path="/terms-conditions" element={<TermsConditions />} />
+        <Route path="/legal-notice" element={<LegalNotice />} />
        <Route path="/profile" element={<Profile />} />
        {/* <Route path="/success-payment" element={<SuccessPayment />} />
        <Route path="/failed-payment" element={<FailedPayment />} /> */}
@@ -101,6 +104,7 @@ export default function App() {
           <Route path="/password-reset" element={<PasswordReset />} />
            <Route path="/public-terms-conditions" element={<PublicTermsConditions />} />
            <Route path="/public-privacy-policy" element={<PublicPrivacyPolicy />} />
+           <Route path="/public-legal-notice" element={<PublicLegalNotice />} />
            <Route path="/public-subscription" element={<PublicSubscription />} />
             <Route path="/public-support" element={<PublicSupport />} />
           <Route path="/success-payment" element={<SuccessPayment />} />
