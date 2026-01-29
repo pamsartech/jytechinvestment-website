@@ -133,6 +133,9 @@ export default function Subscription() {
         durationMonths: billing === "yearly" ? 12 : 1,
       };
 
+      const stripePromise = loadStripe("pk_test_51ROKEAEOKXZwYIXsSsMJfdL6X8Jv041hdP3CrLvC1FSpmNpvHnicXR9aRlIDA0VMw9i2SUuJSNfCjZZv31iI0uSn00GgmpFYwV");
+      const stripe = await stripePromise;
+
       const response = await axios.post(
         "https://api.emibocquillon.fr/api/stripe/checkout-payment",
         payload,
